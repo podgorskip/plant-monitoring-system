@@ -30,5 +30,5 @@ public abstract class Measurement {
 
     @Column(name = "date", nullable = false)
     @JsonDeserialize(using = UnixTimestampDeserializer.class)
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime date = LocalDateTime.now();
 }

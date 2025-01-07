@@ -3,8 +3,8 @@ package iot.pot.services;
 import iot.pot.database.model.Device;
 import iot.pot.database.model.SoilHumidity;
 import iot.pot.database.repositories.SoilHumidityRepository;
-import iot.pot.model.enums.Measurement;
-import iot.pot.mqtt.MqttDataHandler;
+import iot.pot.model.MeasurementInterface;
+import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
 
 @Service
 @RequiredArgsConstructor
-public class SoilHumidityService implements MqttDataHandler {
+public class SoilHumidityService implements MeasurementInterface {
     private final SoilHumidityRepository soilHumidityRepository;
     private final ThresholdVerifier thresholdVerifier;
 
@@ -27,11 +27,11 @@ public class SoilHumidityService implements MqttDataHandler {
         soilHumidity.setValue(value);
 
         thresholdVerifier.verifyThreshold(
-                Measurement.SOIL_HUMIDITY,
+                MeasurementEnum.SOIL_HUMIDITY,
                 device.getAirHumidityLowerThreshold(),
                 device.getAirHumidityUpperThreshold(),
                 value,
-                device.getUser()
+                device
         );
 
         soilHumidityRepository.save(soilHumidity);

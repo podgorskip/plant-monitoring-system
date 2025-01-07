@@ -1,20 +1,24 @@
 package iot.pot.validation;
 
-import iot.pot.database.model.User;
+import iot.pot.database.model.Device;
 import iot.pot.messaging.MeasurementNotificationHandler;
-import iot.pot.model.enums.Measurement;
+import iot.pot.model.enums.MeasurementEnum;
+import iot.pot.services.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class ThresholdVerifier {
   private final MeasurementNotificationHandler notificationHandler;
+  private final NotificationService notificationService;
 
-  public void verifyThreshold(Measurement measurement, Double lowerThreshold, Double upperThreshold, Double value, User user) {
-      if (lowerThreshold > value) {
+  public void verifyThreshold(MeasurementEnum measurement, Double lowerThreshold, Double upperThreshold, Double value, Device device) {
+      if (Objects.nonNull(lowerThreshold) && (lowerThreshold > value)) {
+          notificationService.createNotification(device, measurement, true);
           notificationHandler.sendMessage(
-                  user, String.format(
+                  device.getUser(), String.format(
                           measurement.getMeasurementDetails().getLowerThresholdMessageTemplate(),
                           lowerThreshold,
                           value
@@ -22,9 +26,10 @@ public class ThresholdVerifier {
           );
       }
 
-      if (upperThreshold < value) {
+      if (Objects.nonNull(upperThreshold) && (upperThreshold < value)) {
+          notificationService.createNotification(device, measurement, false);
           notificationHandler.sendMessage(
-                  user, String.format(
+                  device.getUser(), String.format(
                           measurement.getMeasurementDetails().getUpperThresholdMessageTemplate(),
                           upperThreshold,
                           value

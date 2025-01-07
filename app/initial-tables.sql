@@ -64,3 +64,22 @@ CREATE TABLE insolation (
     device_id BIGINT NOT NULL REFERENCES device(id),
     date TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+DROP TABLE IF EXISTS notification;
+
+CREATE TABLE notification (
+    id BIGINT PRIMARY KEY,
+    device_id BIGINT NOT NULL REFERENCES device(id),
+    type VARCHAR(32) NOT NULL,
+    min BOOLEAN,
+    date TIMESTAMP NOT NULL DEFAULT now()
+);
+
+DROP TABLE IF EXISTS water_request;
+
+CREATE TABLE water_request (
+    id BIGINT PRIMARY KEY,
+    device_id BIGINT NOT NULL REFERENCES device(id),
+    time INT NOT NULL,
+    date TIMESTAMP NOT NULL DEFAULT now()
+);

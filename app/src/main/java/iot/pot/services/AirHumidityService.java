@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iot.pot.database.model.AirHumidity;
 import iot.pot.database.model.Device;
 import iot.pot.database.repositories.AirHumidityRepository;
-import iot.pot.model.enums.Measurement;
-import iot.pot.mqtt.MqttDataHandler;
+import iot.pot.model.MeasurementInterface;
+import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AirHumidityService implements MqttDataHandler {
+public class AirHumidityService implements MeasurementInterface {
     private final AirHumidityRepository airHumidityRepository;
     private final ThresholdVerifier thresholdVerifier;
     private final ObjectMapper objectMapper;
@@ -28,15 +28,13 @@ public class AirHumidityService implements MqttDataHandler {
             AirHumidity airHumidity = objectMapper.readValue(messageString, AirHumidity.class);
             airHumidity.setDevice(device);
 
-            System.out.println(airHumidity);
-
-//            thresholdVerifier.verifyThreshold(
-//                    Measurement.AIR_HUMIDITY,
-//                    device.getAirHumidityLowerThreshold(),
-//                    device.getAirHumidityUpperThreshold(),
-//                    airHumidity.getValue(),
-//                    device.getUser()
-//            );
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.AIR_HUMIDITY,
+                    device.getAirHumidityLowerThreshold(),
+                    device.getAirHumidityUpperThreshold(),
+                    airHumidity.getValue(),
+                    device
+            );
 
             airHumidityRepository.save(airHumidity);
 
@@ -45,7 +43,7 @@ public class AirHumidityService implements MqttDataHandler {
         }
     }
 
-    public Page<AirHumidity> findByDevice(Device device, Pageable pageable) {
+    public Page<AirHumidity> getByDevice(Device device, Pageable pageable) {
         return airHumidityRepository.findByDevice(device, pageable);
     }
 }

@@ -8,7 +8,7 @@ public class MeasurementMapper {
         return MeasurementResponse.builder()
                 .id(measurement.getId())
                 .value(measurement.getValue())
-                .date(measurement.getTimestamp())
+                .date(measurement.getDate())
                 .build();
     }
 }

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import iot.pot.database.model.Device;
 import iot.pot.database.model.Temperature;
 import iot.pot.database.repositories.TemperatureRepository;
-import iot.pot.model.enums.Measurement;
-import iot.pot.mqtt.MqttDataHandler;
+import iot.pot.model.MeasurementInterface;
+import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class TemperatureService implements MqttDataHandler {
+public class TemperatureService implements MeasurementInterface {
     private final TemperatureRepository temperatureRepository;
     private final ThresholdVerifier thresholdVerifier;
     private final ObjectMapper objectMapper;
@@ -29,15 +29,13 @@ public class TemperatureService implements MqttDataHandler {
             Temperature temperature = objectMapper.readValue(messageString, Temperature.class);
             temperature.setDevice(device);
 
-            System.out.println(temperature);
-
-//            thresholdVerifier.verifyThreshold(
-//                    Measurement.AIR_HUMIDITY,
-//                    device.getAirHumidityLowerThreshold(),
-//                    device.getAirHumidityUpperThreshold(),
-//                    temperature.getValue(),
-//                    device.getUser()
-//            );
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.AIR_HUMIDITY,
+                    device.getAirHumidityLowerThreshold(),
+                    device.getAirHumidityUpperThreshold(),
+                    temperature.getValue(),
+                    device
+            );
 
             temperatureRepository.save(temperature);
 

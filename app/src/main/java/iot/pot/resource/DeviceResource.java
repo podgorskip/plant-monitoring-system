@@ -2,11 +2,11 @@ package iot.pot.resource;
 
 import iot.pot.database.model.*;
 import iot.pot.endpoints.DeviceEndpoints;
-import iot.pot.model.mapper.DeviceMapper;
+import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.model.mapper.MeasurementMapper;
-import iot.pot.model.request.DeviceRequest;
-import iot.pot.model.response.DeviceResponse;
+import iot.pot.model.request.ThresholdRequest;
 import iot.pot.model.response.MeasurementResponse;
+import iot.pot.model.response.ThresholdResponse;
 import iot.pot.services.DeviceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,35 +25,28 @@ public class DeviceResource implements DeviceEndpoints {
     private final DeviceService deviceService;
 
     @Override
-    public ResponseEntity<Page<MeasurementResponse>> getAirHumidity(Long id, Integer size, Integer page, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortBy, sortDir);
+    public ResponseEntity<Page<MeasurementResponse>> getAirHumidity(Long id, MeasurementEnum measurement, Integer size, Integer page, String sortBy, String sortDir) {
+        Sort.Direction direction = Sort.Direction.fromString(sortDir);
+        Sort sort = Sort.by(direction, sortBy);
         Pageable pageable = PageRequest.of(page, size, sort);
-        Page<AirHumidity> result = deviceService.getAirHumidity(id, pageable);
+        Page<? extends Measurement> result = deviceService.getMeasurement(id, measurement, pageable);
         return ResponseEntity.status(HttpStatus.OK).body(result.map(MeasurementMapper::toMeasurementResponse));
     }
 
     @Override
-    public ResponseEntity<Page<MeasurementResponse>> getSoilHumidity(Long id, Integer size, Integer page, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortBy, sortDir);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<SoilHumidity> result = deviceService.getSoilHumidity(id, pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(result.map(MeasurementMapper::toMeasurementResponse));
+    public ResponseEntity<String> setThreshold(Long id, ThresholdRequest request, MeasurementEnum measurementEnum) {
+        deviceService.setThresholds(id, measurementEnum, request.getMin(), request.getMax());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Override
-    public ResponseEntity<Page<MeasurementResponse>> getTemperature(Long id, Integer size, Integer page, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortBy, sortDir);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Temperature> result = deviceService.getTemperature(id, pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(result.map(MeasurementMapper::toMeasurementResponse));
+    public ResponseEntity<String> sendWaterRequest(Long id, Integer time) {
+        deviceService.sendWaterRequest(id, time);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Override
-    public ResponseEntity<Page<MeasurementResponse>> getInsolation(Long id, Integer size, Integer page, String sortBy, String sortDir) {
-        Sort sort = Sort.by(sortBy, sortDir);
-        Pageable pageable = PageRequest.of(page, size, sort);
-        Page<Insolation> result = deviceService.getInsolation(id, pageable);
-        return ResponseEntity.status(HttpStatus.OK).body(result.map(MeasurementMapper::toMeasurementResponse));
+    public ResponseEntity<ThresholdResponse> getThresholdForMeasurement(Long id, MeasurementEnum measurementEnum) {
+        return ResponseEntity.ok(deviceService.getThresholdForMeasurement(id, measurementEnum));
     }
-
 }
