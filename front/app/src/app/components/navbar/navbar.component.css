@@ -1,0 +1,12 @@
+nav {
+    background-color: rgb(31, 114, 13);
+    padding: 1em;
+}
+
+nav img {
+    width: 1.3em;
+}
+
+.nav-item a {
+    color: white;
+}

@@ -35,7 +35,7 @@ public class DeviceResource implements DeviceEndpoints {
 
     @Override
     public ResponseEntity<String> setThreshold(Long id, ThresholdRequest request, MeasurementEnum measurementEnum) {
-        deviceService.setThresholds(id, measurementEnum, request.getMin(), request.getMax());
+        deviceService.setThresholds(id, measurementEnum, request.getLower(), request.getUpper());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 

@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class DeviceResponse {
     private Long id;
     private String deviceNumber;
-    private UserResponse user;
+    private String name;
+    private String info;
     private LocalDateTime creationDate;
 }

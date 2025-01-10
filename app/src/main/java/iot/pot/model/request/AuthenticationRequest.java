@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ThresholdRequest {
-    private Double lower;
-    private Double upper;
+public class AuthenticationRequest {
+    private String email;
+    private String password;
 }

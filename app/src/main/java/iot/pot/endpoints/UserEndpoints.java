@@ -5,6 +5,7 @@ import iot.pot.model.response.DeviceResponse;
 import iot.pot.model.response.UserResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -29,6 +30,6 @@ public interface UserEndpoints {
     @GetMapping("/{id}")
     ResponseEntity<UserResponse> getUser(@NotNull @PathVariable Long id);
 
-    @GetMapping("/{id}/devices")
+    @GetMapping(value = "/{id}/devices", produces = "application/json")
     ResponseEntity<List<DeviceResponse>> getUserDevices(@NotNull @PathVariable Long id);
 }

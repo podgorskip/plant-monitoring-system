@@ -26,7 +26,7 @@ public interface DeviceEndpoints {
     ResponseEntity<String> setThreshold(
             @NotNull @PathVariable("id") Long id,
             @RequestBody ThresholdRequest request,
-            @RequestParam("measurementEnum") MeasurementEnum measurementEnum
+            @RequestParam("measurement") MeasurementEnum measurement
     );
 
     @PostMapping("/{id}/watering")

@@ -1,0 +1,27 @@
+h3 {
+    font-weight: 400 !important;
+    font-size: 1.3em !important;
+    padding-bottom: 0.5em !important;
+    border-bottom: 1px solid gray;
+}
+
+input, select {
+    border-radius: 5px;
+    border: 1px solid green;
+}
+
+option {
+    box-shadow: none;
+}
+
+button {
+    background-color: green;
+    color: white;
+    border-radius: 5px;
+    border: 1px solid green;   
+    padding: 2px 10px;
+}
+
+button:hover {
+    background-color: rgb(28, 142, 28);
+}

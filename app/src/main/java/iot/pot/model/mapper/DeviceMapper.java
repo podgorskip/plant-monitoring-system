@@ -8,9 +8,10 @@ public class DeviceMapper {
     public static DeviceResponse toDeviceResponse(Device device) {
         return DeviceResponse.builder()
                 .id(device.getId())
+                .name(device.getName())
+                .info(device.getInfo())
                 .deviceNumber(device.getMac())
                 .creationDate(device.getCreationDate())
-                .user(UserMapper.toUserResponse(device.getUser()))
                 .build();
     }
 }

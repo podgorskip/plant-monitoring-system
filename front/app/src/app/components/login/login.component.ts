@@ -1,0 +1,30 @@
+import { CommonModule } from '@angular/common';
+import { Component } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
+import { AuthenticationService } from '../../auth/services/auth/authentication.service';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  imports: [FormsModule, CommonModule],
+  providers: [AuthenticationService],
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  email?: string;
+  password?: string;
+  errorMessage?: string;
+
+  constructor(
+    private authenticationService: AuthenticationService,
+    private router: Router
+  ) {}
+
+  onSubmit(form: NgForm): void {
+    if (form.valid && this.email && this.password) {
+      this.authenticationService.authenticate(this.email, this.password);
+    }
+  }
+}

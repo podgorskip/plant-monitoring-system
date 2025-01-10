@@ -6,6 +6,6 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ThresholdResponse {
-    private Double lowerThreshold;
-    private Double upperThreshold;
+    private Double lower;
+    private Double upper;
 }

@@ -19,6 +19,12 @@ public class Device {
     @Column(name = "mac", unique = true)
     private String mac;
 
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "info")
+    private String info;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

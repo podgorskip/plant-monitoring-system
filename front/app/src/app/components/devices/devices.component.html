@@ -1,0 +1,12 @@
+<div class="devices">
+    <h3>Devices</h3>
+    <div class="devices-container">
+        <div *ngFor="let device of devices" (click)="selectDevice(device)">
+            <p>{{device.name}}</p>
+            <p>{{device.deviceNumber}}</p>
+        </div>
+    </div>
+    <div class="device-details" *ngIf="selectedDevice">
+        <app-device [device]="selectedDevice"/>
+    </div>
+</div>
