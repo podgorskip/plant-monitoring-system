@@ -5,7 +5,7 @@
 #include "mqtt.h"
 #include "nvs_storage.h"
 #include "parameter.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/cJSON/cJSON.h"
+#include "cJSON.h"
 #include "time.h"
 
 #define MAX_RETRY_COUNT 5

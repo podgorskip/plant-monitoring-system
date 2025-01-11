@@ -19,11 +19,11 @@
 #include "esp_http_server.h"
 #include "esp_sntp.h"
 #include "esp_mac.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/bt/host/bluedroid/api/include/api/esp_gatt_common_api.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/bt/include/esp_bt.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/bt/host/bluedroid/api/include/api/esp_gap_ble_api.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/bt/host/bluedroid/api/include/api/esp_gatts_api.h"
-#include "/Users/patryk.podgorski/esp/esp-idf/components/bt/host/bluedroid/api/include/api/esp_bt_main.h"
+#include "esp_gatt_common_api.h"
+#include "esp_bt.h"
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_main.h"
 
 // GPIO for LED
 #define LED_GPIO_PIN GPIO_NUM_2
