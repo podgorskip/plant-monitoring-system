@@ -57,6 +57,7 @@ export class DeviceComponent implements OnInit {
         .subscribe({
           next: () => {
             console.log('Threshold updated successfully.');
+            this.resetForm();
             this.loadThresholds();
           },
           error: (err) =>
@@ -73,7 +74,10 @@ export class DeviceComponent implements OnInit {
       return;
     }
     this.deviceService.startWatering(this.device.id, this.wateringTime).subscribe({
-      next: () => console.log('Watering started successfully.'),
+      next: () => {
+        this.wateringTime = 0;
+        alert('Watering started successfully.')
+      },
       error: (err) => console.error('Failed to start watering:', err),
     });
   }
@@ -97,5 +101,11 @@ export class DeviceComponent implements OnInit {
       error: (err) =>
         console.error(`Failed to fetch measurements for ${measurement}:`, err),
     });
+  }
+
+  private resetForm(): void {
+    this.selectedMeasurement = undefined;
+    this.thresholdMin = undefined;
+    this.thresholdMax = undefined;
   }
 }

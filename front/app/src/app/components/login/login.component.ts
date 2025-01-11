@@ -24,7 +24,12 @@ export class LoginComponent {
 
   onSubmit(form: NgForm): void {
     if (form.valid && this.email && this.password) {
-      this.authenticationService.authenticate(this.email, this.password);
+      this.authenticationService.authenticate(this.email, this.password).subscribe({
+        next: (authenticated) => {
+          console.log(authenticated);
+          if (authenticated) this.router.navigate(['/devices']);
+        }
+      })
     }
   }
 }

@@ -2,8 +2,11 @@
     <h3>Devices</h3>
     <div class="devices-container">
         <div *ngFor="let device of devices" (click)="selectDevice(device)">
-            <p>{{device.name}}</p>
-            <p>{{device.deviceNumber}}</p>
+            <img src="assets/plant.png" alt="Plant icon">
+            <div>
+                <p>{{device.name}}</p>
+                <p class="mac">{{device.deviceNumber}}</p>
+            </div>
         </div>
     </div>
     <div class="device-details" *ngIf="selectedDevice">

@@ -234,7 +234,7 @@ void ble_gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatt_if, 
             if (ret != ESP_OK) {
                 ESP_LOGE(BLE_GATT, "Failed to save user mac: %s", esp_err_to_name(ret));
             } else {
-                snprintf(read_value, sizeof(read_value), "http://localhost:8080/users/%s/devices/%s", user_mac, device_mac);
+                snprintf(read_value, sizeof(read_value), "http://localhost:4200/users/%s/devices/%s", user_mac, device_mac);
 
                 esp_attr_value_t read_attr_value = {
                     .attr_max_len = CHAR_VAL_LEN_MAX,       

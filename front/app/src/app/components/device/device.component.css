@@ -78,6 +78,9 @@
     text-align: center;
 }
 
+.watering button, .add-threshold button {
+    border-radius: 5px;
+}
 .pagination {
     font-size: 0.7em;
     display: flex;

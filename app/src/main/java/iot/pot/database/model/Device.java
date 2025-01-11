@@ -20,10 +20,12 @@ public class Device {
     private String mac;
 
     @Column(name = "name")
-    private String name;
+    @Builder.Default
+    private String name = "Smart pot";
 
     @Column(name = "info")
-    private String info;
+    @Builder.Default
+    private String info = "ESP32";
 
     @ManyToOne
     @JoinColumn(name = "user_id")

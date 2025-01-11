@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { Device } from '../../model/Device';
+import { UserRequest } from '../../model/dto/UserRequest';
 
 @Injectable({
   providedIn: 'root'
@@ -13,5 +14,10 @@ export class UserService {
 
   getUserDevices(id: number): Observable<Device[]> {
     return this.http.get<Device[]>(`${this.apiUrl}/${id}/devices`);
+  }
+
+  createUser(user: UserRequest, userMac: string, deviceMac: string): void {
+    const response =  firstValueFrom(this.http.post<number>(`${this.apiUrl}/${userMac}/devices/${deviceMac}`, user));
+    console.log(response)
   }
 }
