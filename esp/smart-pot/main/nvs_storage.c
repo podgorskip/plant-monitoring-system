@@ -6,7 +6,10 @@
 #include "parameter.h"
 
 #define NVS_TEMPERATURE_NAMESPACE "temp_buf"
-#define NVS_HUMIDITY_NAMESPACE "humidity_buf"
+#define NVS_HUMIDITY_NAMESPACE "air_humidity_buf"
+#define NVS_SOIL_HUMIDITY_NAMESPACE "soil_humidity_buf"
+#define NVS_INSOLATION_NAMESPACE "insolation_buff"
+
 #define MAX_MESSAGES 10
 #define NVS "NVS"
 
@@ -16,16 +19,37 @@ bool is_broker_url_set = false;
 bool is_broker_username_set = false;
 bool is_broker_password_set = false;
 
+const char* get_namespace_name(enum Parameter param) {
+    switch (param) {
+        case TEMPERATURE:
+            return NVS_TEMPERATURE_NAMESPACE;
+        case HUMIDITY:
+            return NVS_HUMIDITY_NAMESPACE;
+        case SOIL_HUMIDITY:
+            return NVS_SOIL_HUMIDITY_NAMESPACE;
+        case INSOLATION:
+            return NVS_INSOLATION_NAMESPACE;
+        default:
+            ESP_LOGE("NVS", "Invalid parameter provided");
+            return NULL; 
+    }
+}
+
 esp_err_t save_message_to_nvs(const char *message, enum Parameter param) {
     nvs_handle_t nvs_handle;
     esp_err_t err;
 
-    const char *namespace_name = (param == TEMPERATURE) ? 
-        NVS_TEMPERATURE_NAMESPACE : NVS_HUMIDITY_NAMESPACE;
+    const char *namespace_name = get_namespace_name(param);
+
+    if (namespace_name != NULL) {
+        ESP_LOGI(NVS, "Using namespace: %s for parameter: %d", namespace_name, param);
+    } else {
+        ESP_LOGE(NVS, "Failed to get namespace for parameter: %d", param);
+    }
 
     err = nvs_open(namespace_name, NVS_READWRITE, &nvs_handle);
     if (err != ESP_OK) {
-        ESP_LOGE(namespace_name, "Nie udało się otworzyć bufora: %s", namespace_name);
+        ESP_LOGE(namespace_name, "Could not open buffer: %s", namespace_name);
         return err;
     }
 
@@ -39,7 +63,7 @@ esp_err_t save_message_to_nvs(const char *message, enum Parameter param) {
         if (err == ESP_ERR_NVS_NOT_FOUND) {
             err = nvs_set_str(nvs_handle, key, message);
             if (err == ESP_OK) {
-                ESP_LOGI(namespace_name, "Zapisano z id: %s", key);
+                ESP_LOGI(namespace_name, "Saved, id=%s", key);
                 nvs_commit(nvs_handle);
             }
             nvs_close(nvs_handle);
@@ -47,7 +71,7 @@ esp_err_t save_message_to_nvs(const char *message, enum Parameter param) {
         }
     }
 
-    ESP_LOGW(namespace_name, "Bufor pełny - brak mozliwości zapisywania dalszych wiadomości.");
+    ESP_LOGW(namespace_name, "Buffer full - cannot save more messages.");
     nvs_close(nvs_handle);
     return ESP_ERR_NO_MEM;
 }
@@ -57,7 +81,7 @@ void resent_messages(const char *namespace_name, const char *topic, esp_mqtt_cli
     esp_err_t err = nvs_open(namespace_name, NVS_READWRITE, &nvs_handle);
 
     if (err != ESP_OK) {
-        ESP_LOGE(namespace_name, "Nie udało się otworzyć bufora: %s", namespace_name);
+        ESP_LOGE(namespace_name, "Could not open the buffer: %s", namespace_name);
         return;
     }
 
@@ -75,11 +99,11 @@ void resent_messages(const char *namespace_name, const char *topic, esp_mqtt_cli
                 if (err == ESP_OK) {
                     int msg_id = esp_mqtt_client_publish(client, topic, message, 0, 1, 0);
                     if (msg_id != -1) {
-                        ESP_LOGI(MQTT, "Pomyślnie ponowiono wiadomość");
+                        ESP_LOGI(MQTT, "Successfully sent message");
                         nvs_erase_key(nvs_handle, key);
                         nvs_commit(nvs_handle); 
                     } else {
-                        ESP_LOGE(MQTT, "Nie udało się ponowić wiadomości.");
+                        ESP_LOGE(MQTT, "Could not resent message.");
                     }
                 }
                 free(message); 
@@ -94,9 +118,9 @@ void resent_messages(const char *namespace_name, const char *topic, esp_mqtt_cli
 }
 
 void resend_messages_from_nvs(esp_mqtt_client_handle_t client) {
-    ESP_LOGI("MQTT", "Wysyłanie danych z bufora...");
+    ESP_LOGI("MQTT", "Sending messagess from buffer..");
     resent_messages(NVS_TEMPERATURE_NAMESPACE, TEMPERATURE_TOPIC, client);
-    resent_messages(NVS_HUMIDITY_NAMESPACE, HUMIDITY_TOPIC, client);
+    resent_messages(NVS_HUMIDITY_NAMESPACE, AIR_HUMIDITY_TOPIC, client);
 }
 
 esp_err_t save_wifi_ssid(const char *ssid) {
