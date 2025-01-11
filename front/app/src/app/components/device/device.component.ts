@@ -5,6 +5,7 @@ import { Threshold } from '../../model/Threshold';
 import { MeasurementEnum } from './../../model/enums/MeasurementEnum';
 import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Frequency } from '../../model/Frequency';
 
 @Component({
   selector: 'app-device',
@@ -17,11 +18,13 @@ import { FormsModule } from '@angular/forms';
 export class DeviceComponent implements OnInit {
   @Input() device!: Device;
   thresholds: { measurement: MeasurementEnum; threshold: Threshold }[] = [];
+  frequencies: { measurement: MeasurementEnum; frequency: Frequency }[] = []; 
   measurementEnumKeys = Object.keys(MeasurementEnum);
   selectedMeasurement?: MeasurementEnum;
   thresholdMin?: number;
   thresholdMax?: number;
   wateringTime!: number;
+  frequencyValue?: number;
   selectedMeasurementTab!: string;
   paginatedMeasurements: { date: string; value: number }[] = [];
   currentPage = 0;
@@ -48,6 +51,23 @@ export class DeviceComponent implements OnInit {
       });
     });
   }
+
+  private loadFrequencies(): void {
+    this.frequencies = [];
+    this.measurementEnumKeys.forEach((key) => {
+      const measurementKey = key as keyof typeof MeasurementEnum;
+      this.deviceService.getDeviceFrequency(this.device.id, measurementKey).subscribe({
+        next: (frequency_value) => {
+          this.frequencies.push({
+            measurement: MeasurementEnum[measurementKey],
+            frequency: frequency_value,
+          });
+        },
+        error: (err) =>
+          console.error(`Failed to fetch frequency for ${key}: ${err}`),
+      });
+    });
+  }
   
   addThreshold(): void {
     if (this.selectedMeasurement && this.thresholdMin != null && this.thresholdMax != null) {
@@ -56,13 +76,32 @@ export class DeviceComponent implements OnInit {
         .setDeviceThreshold(this.device.id, this.selectedMeasurement, request)
         .subscribe({
           next: () => {
-            console.log('Threshold updated successfully.');
             this.resetForm();
             this.loadThresholds();
+            alert('Threshold updated successfully.');
           },
           error: (err) =>
             console.error(
               `Failed to set threshold for ${this.selectedMeasurement}: ${err}`
+            ),
+        });
+    }
+  }
+
+  addFrequency(): void {
+    if (this.selectedMeasurement && this.frequencyValue != null) {
+      const request: Frequency = { frequency: this.frequencyValue };
+      this.deviceService
+        .setDeviceFrequency(this.device.id, this.selectedMeasurement, request)
+        .subscribe({
+          next: () => {
+            this.resetForm();
+            this.loadFrequencies();
+            alert('Frequency updated successfully.')
+          },
+          error: (err) =>
+            console.error(
+              `Failed to set frequency for ${this.selectedMeasurement}: ${err}`
             ),
         });
     }
@@ -107,5 +146,6 @@ export class DeviceComponent implements OnInit {
     this.selectedMeasurement = undefined;
     this.thresholdMin = undefined;
     this.thresholdMax = undefined;
+    this.frequencyValue = undefined;
   }
 }

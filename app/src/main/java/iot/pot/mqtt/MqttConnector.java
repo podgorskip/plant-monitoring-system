@@ -44,8 +44,7 @@ public class MqttConnector {
         });
     }
 
-    public void publish(Device device, MeasurementEnum measurement, String value) {
-        String topic = String.format("%s/%s/%s/app", device.getUser().getMac(), device.getMac(), measurement.getMeasurementDetails().getTopic());
+    public void publish(String topic, String value) {
         MqttMessage message = new MqttMessage(value.getBytes());
 
         try {

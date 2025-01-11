@@ -4,15 +4,13 @@ import iot.pot.database.model.*;
 import iot.pot.database.repositories.DeviceRepository;
 import iot.pot.exceptions.DeviceException;
 import iot.pot.model.enums.MeasurementEnum;
+import iot.pot.model.response.FrequencyResponse;
 import iot.pot.model.response.ThresholdResponse;
 import iot.pot.mqtt.MqttConnector;
 import iot.pot.mqtt.SubscribeParam;
-import lombok.RequiredArgsConstructor;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Objects;
@@ -74,6 +72,14 @@ public class DeviceService {
         deviceRepository.save(device);
     }
 
+    public void setFrequency(Long id, MeasurementEnum measurement, Integer frequency) {
+        Device device = findDeviceById(id);
+        setFrequencyThresholds(device, measurement, frequency);
+        deviceRepository.save(device);
+        String topic = String.format("%s/%s/%s/frequency", device.getUser().getMac(), device.getMac(), measurement.getMeasurementDetails().getTopic());
+        mqttConnector.publish(topic, String.valueOf(frequency));
+    }
+
     public Page<? extends Measurement> getMeasurement(Long id, MeasurementEnum measurement, Pageable pageable) {
         Device device = findDeviceById(id);
         BiFunction<Device, Pageable, Page<? extends Measurement>> fetcher = measurementFetchers.get(measurement);
@@ -83,14 +89,6 @@ public class DeviceService {
         }
 
         return fetcher.apply(device, pageable);
-    }
-
-    public void sendWaterRequest(Long id, Integer time) {
-        Device device = findDeviceById(id);
-        if (Objects.nonNull(time) && time > 0) {
-            mqttConnector.publish(device, MeasurementEnum.SOIL_HUMIDITY, String.valueOf(time));
-            waterRequestService.createWaterRequest(device, time);
-        }
     }
 
     public ThresholdResponse getThresholdForMeasurement(Long id, MeasurementEnum measurementEnum) {
@@ -116,9 +114,29 @@ public class DeviceService {
         };
     }
 
+    public FrequencyResponse getFrequencyForMeasurement(Long id, MeasurementEnum measurementEnum) {
+        Device device = findDeviceById(id);
+
+        return switch (measurementEnum) {
+            case TEMPERATURE -> new FrequencyResponse(device.getTemperatureFrequency());
+            case AIR_HUMIDITY -> new FrequencyResponse(device.getAirHumidityFrequency());
+            case SOIL_HUMIDITY -> new FrequencyResponse(device.getSoilHumidityFrequency());
+            case INSOLATION -> new FrequencyResponse(device.getInsolationFrequency());
+        };
+    }
+
     private Device findDeviceById(Long id) {
         return deviceRepository.findById(id)
                 .orElseThrow(() -> new DeviceException(DeviceException.ExceptionType.NOT_FOUND, id));
+    }
+
+    private void setFrequencyThresholds(Device device, MeasurementEnum measurement, Integer frequency) {
+        switch (measurement) {
+            case TEMPERATURE -> device.setTemperatureFrequency(frequency);
+            case AIR_HUMIDITY -> device.setAirHumidityFrequency(frequency);
+            case SOIL_HUMIDITY -> device.setSoilHumidityFrequency(frequency);
+            case INSOLATION -> device.setInsolationFrequency(frequency);
+        }
     }
 
     private void setMeasurementThresholds(Device device, MeasurementEnum measurement, Double min, Double max) {

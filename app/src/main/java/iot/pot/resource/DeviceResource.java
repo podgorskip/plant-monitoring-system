@@ -4,10 +4,13 @@ import iot.pot.database.model.*;
 import iot.pot.endpoints.DeviceEndpoints;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.model.mapper.MeasurementMapper;
+import iot.pot.model.request.FrequencyRequest;
 import iot.pot.model.request.ThresholdRequest;
+import iot.pot.model.response.FrequencyResponse;
 import iot.pot.model.response.MeasurementResponse;
 import iot.pot.model.response.ThresholdResponse;
 import iot.pot.services.DeviceService;
+import iot.pot.services.SoilHumidityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class DeviceResource implements DeviceEndpoints {
     private final DeviceService deviceService;
+    private final SoilHumidityService soilHumidityService;
 
     @Override
     public ResponseEntity<Page<MeasurementResponse>> getAirHumidity(Long id, MeasurementEnum measurement, Integer size, Integer page, String sortBy, String sortDir) {
@@ -41,12 +45,23 @@ public class DeviceResource implements DeviceEndpoints {
 
     @Override
     public ResponseEntity<String> sendWaterRequest(Long id, Integer time) {
-        deviceService.sendWaterRequest(id, time);
+        soilHumidityService.sendWaterRequest(id, time);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @Override
     public ResponseEntity<ThresholdResponse> getThresholdForMeasurement(Long id, MeasurementEnum measurementEnum) {
         return ResponseEntity.ok(deviceService.getThresholdForMeasurement(id, measurementEnum));
+    }
+
+    @Override
+    public ResponseEntity<FrequencyResponse> getFrequencyResponse(Long id, MeasurementEnum measurement) {
+        return ResponseEntity.ok(deviceService.getFrequencyForMeasurement(id, measurement));
+    }
+
+    @Override
+    public ResponseEntity<String> setFrequency(Long id, FrequencyRequest request, MeasurementEnum measurement) {
+        deviceService.setFrequency(id, measurement, request.getFrequency());
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

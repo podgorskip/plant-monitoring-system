@@ -1,7 +1,9 @@
 package iot.pot.endpoints;
 
 import iot.pot.model.enums.MeasurementEnum;
+import iot.pot.model.request.FrequencyRequest;
 import iot.pot.model.request.ThresholdRequest;
+import iot.pot.model.response.FrequencyResponse;
 import iot.pot.model.response.MeasurementResponse;
 import iot.pot.model.response.ThresholdResponse;
 import jakarta.validation.constraints.NotNull;
@@ -38,6 +40,19 @@ public interface DeviceEndpoints {
     @GetMapping("/{id}/thresholds")
     ResponseEntity<ThresholdResponse> getThresholdForMeasurement(
             @NotNull @PathVariable Long id,
+            @RequestParam("measurement") MeasurementEnum measurement
+    );
+
+    @GetMapping("/{id}/frequency")
+    ResponseEntity<FrequencyResponse> getFrequencyResponse(
+            @NotNull @PathVariable Long id,
+            @RequestParam("measurement") MeasurementEnum measurement
+    );
+
+    @PatchMapping("/{id}/frequency")
+    ResponseEntity<String> setFrequency(
+            @NotNull @PathVariable("id") Long id,
+            @RequestBody FrequencyRequest request,
             @RequestParam("measurement") MeasurementEnum measurement
     );
 }

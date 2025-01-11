@@ -30,7 +30,7 @@
             {{ getEnumValue(m) }}
           </button>
         </div>
-        <div *ngIf="paginatedMeasurements.length">
+        <div *ngIf="paginatedMeasurements.length" class="data">
           <div *ngFor="let measurement of paginatedMeasurements">
             <p><strong>Date:</strong> {{ measurement.date }}</p>
             <p><strong>Value:</strong> {{ measurement.value }}</p>
@@ -45,6 +45,25 @@
           </div>
         </div>
       </div>
+
+    <div class="add-frequency">
+      <h4>Update frequency</h4>
+      <form (ngSubmit)="addFrequency()">
+        <div>
+          <label for="measurement">Measurement:</label>
+          <select id="measurement" [(ngModel)]="selectedMeasurement" name="measurement">
+            <option *ngFor="let m of measurementEnumKeys" [value]="m">{{m}}</option>
+          </select>
+        </div>
+      
+        <div>
+          <label for="frequency">Frequency:</label>
+          <input id="frequency" type="number" [(ngModel)]="frequencyValue" name="frequency" required />
+        </div>
+    
+        <button type="submit">Set frequency</button>
+      </form>
+    </div>
   
     <div class="thresholds">
       <h4>Thresholds</h4>

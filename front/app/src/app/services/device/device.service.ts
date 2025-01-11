@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { MeasurementEnum } from '../../model/enums/MeasurementEnum';
 import { Device } from '../../model/Device';
 import { Threshold } from '../../model/Threshold';
+import { Frequency } from '../../model/Frequency';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +28,16 @@ export class DeviceService {
 
   setDeviceThreshold(id: number, measurement: MeasurementEnum, threshold: Threshold): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/thresholds`, threshold, {
+      params: { measurement },
+    });
+  }
+
+  getDeviceFrequency(id: number, measurement: keyof typeof MeasurementEnum): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}/frequency?measurement=${measurement}`, {responseType: 'text'});
+  }
+
+  setDeviceFrequency(id: number, measurement: MeasurementEnum, threshold: Frequency): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/frequency`, threshold, {
       params: { measurement },
     });
   }

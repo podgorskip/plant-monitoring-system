@@ -55,6 +55,18 @@ public class Device {
     @Column(name = "insolation_upper_threshold")
     private Double insolationUpperThreshold;
 
+    @Column(name = "air_humidity_frequency")
+    private Integer airHumidityFrequency;
+
+    @Column(name = "soil_humidity_frequency")
+    private Integer soilHumidityFrequency;
+
+    @Column(name = "temperature_frequency")
+    private Integer temperatureFrequency;
+
+    @Column(name = "insolation_frequency")
+    private Integer insolationFrequency;
+
     @Column(name = "creation_date", nullable = false)
     @Builder.Default
     private LocalDateTime creationDate = LocalDateTime.now();

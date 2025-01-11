@@ -26,6 +26,10 @@ CREATE TABLE device (
     temperature_upper_threshold numeric(5, 2),
     insolation_lower_threshold numeric(5, 2),
     insolation_upper_threshold numeric(5, 2),
+    air_humidity_frequency integer not null default 10,
+    soil_humidity_frequency integer not null default 10,
+    temperature_frequency integer not null default 10,
+    insolation_frequency integer not null default 10,
     creation_date TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -83,3 +87,5 @@ CREATE TABLE water_request (
     time INT NOT NULL,
     date TIMESTAMP NOT NULL DEFAULT now()
 );
+
+DROP TABLE IF EXISTS measurement_info;
