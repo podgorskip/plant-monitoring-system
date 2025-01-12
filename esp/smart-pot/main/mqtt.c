@@ -13,10 +13,15 @@
 
 #define WATER_REQUEST_TOPIC "%s/%s/soil_humidity/request"
 
-volatile int air_humidity_delay = 30;
-volatile int soil_humidity_delay = 30;
-volatile int temperature_delay = 30;
-volatile int insolation_delay = 30;
+volatile int air_humidity_delay = 10;
+volatile int soil_humidity_delay = 10;
+volatile int temperature_delay = 10;
+volatile int insolation_delay = 10;
+
+TaskHandle_t temperature_task_handle = NULL;
+TaskHandle_t humidity_task_handle = NULL;
+TaskHandle_t soil_humidity_task_handle = NULL;
+TaskHandle_t insolation_task_handle = NULL;
 
 const char *MQTT = "MQTT";
 static const char *MQTT_TEMPERATURE_TAG = "MQTT (temperature)";
@@ -78,139 +83,6 @@ static void mqtt_reconnect_with_backoff(esp_mqtt_client_handle_t client) {
     }
 }
 
-static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
-{
-    esp_mqtt_event_handle_t event = event_data;
-    esp_mqtt_client_handle_t client = event->client;
-
-    switch ((esp_mqtt_event_id_t)event_id) {
-
-    case MQTT_EVENT_CONNECTED:
-        ESP_LOGI(MQTT, "MQTT_EVENT_CONNECTED");
-        mqtt_connected = true;
-        mqtt_retry_count = 0;
-
-        resend_messages_from_nvs(client);
-        break;
-
-    case MQTT_EVENT_DISCONNECTED:
-        ESP_LOGI(MQTT, "MQTT_EVENT_DISCONNECTED");
-
-        mqtt_connected = false;
-
-        if (!is_wifi_connected) {
-            ESP_LOGW(MQTT, "No Wi-Fi connection. MQTT reconnection delayed.");
-            break;
-        }
-
-        ESP_LOGI(MQTT, "Retrying connection to the MQTT broker...");
-        mqtt_reconnect_with_backoff(client);  
-        break;
-
-    case MQTT_EVENT_SUBSCRIBED:
-        if (event->topic) {
-            ESP_LOGI(MQTT, "Subscribed to topic %s", event->topic);
-        } else {
-            ESP_LOGW(MQTT, "Subscribed to topic: <no topic>");
-        }
-        break;
-
-    case MQTT_EVENT_PUBLISHED:
-        ESP_LOGI(MQTT, "Message published successfully, msg_id=%d", event->msg_id);
-        break;
-
-    case MQTT_EVENT_DATA:
-        if (event->topic_len > 0 && event->data_len > 0)
-        {
-            char topic[event->topic_len + 1];
-            char message[event->data_len + 1];
-
-            strncpy(topic, event->topic, event->topic_len);
-            topic[event->topic_len] = '\0';
-
-            strncpy(message, event->data, event->data_len);
-            message[event->data_len] = '\0';
-
-            ESP_LOGI(MQTT, "Received message on topic: %s -> %s", topic, message);
-
-            char expected_topic[128];
-            snprintf(expected_topic, sizeof(expected_topic), WATER_REQUEST_TOPIC, user_mac, device_mac);
-
-            if (strcmp(topic, expected_topic) == 0) {
-                ESP_LOGI(MQTT, "Handling water request: %s", message);
-                int watering_time_sec = atoi(message); 
-                if (watering_time_sec > 0) {
-                    ESP_LOGI(MQTT, "Watering for %d seconds.", watering_time_sec);
-                    // todo - implement logic for plant watering
-                } else {
-                    ESP_LOGW(MQTT, "Invalid watering time received: %s", message);
-                }
-                return;
-            }
-
-            char frequency_topic[128];
-            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), SOIL_HUMIDITY_TOPIC, user_mac, device_mac, true);
-
-            if (strcmp(topic, frequency_topic) == 0) {
-                ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Handling soil moisture frequency change request: %s", message);
-                int new_delay = atoi(message); 
-                if (new_delay > 0) {
-                    soil_humidity_delay = new_delay; 
-                    ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Soil moisture frequency updated to %d minutes.", soil_humidity_delay);
-                } else {
-                    ESP_LOGW(MQTT_SOIL_HUMIDITY_TAG, "Invalid frequency value received: %s", message);
-                }
-                return;
-            }
-
-            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), TEMPERATURE_TOPIC, user_mac, device_mac, true);
-
-            if (strcmp(topic, frequency_topic) == 0) {
-                ESP_LOGI(MQTT, "Handling temperature frequency change request: %s", message);
-                int new_delay = atoi(message); 
-                if (new_delay > 0) {
-                    temperature_delay = new_delay; 
-                    ESP_LOGI(MQTT_TEMPERATURE_TAG, "Temperature frequency updated to %d minutes.", temperature_delay);
-                } else {
-                    ESP_LOGW(MQTT_TEMPERATURE_TAG, "Invalid frequency value received: %s", message);
-                }
-                return;
-            }
-
-            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), AIR_HUMIDITY_TOPIC, user_mac, device_mac, true);
-
-            if (strcmp(topic, frequency_topic) == 0) {
-                ESP_LOGI(MQTT_HUMIDITY_TAG, "Handling air humidity frequency change request: %s", message);
-                int new_delay = atoi(message); 
-                if (new_delay > 0) {
-                    air_humidity_delay = new_delay; 
-                    ESP_LOGI(MQTT_HUMIDITY_TAG, "Air humidity frequency updated to %d minutes.", air_humidity_delay);
-                } else {
-                    ESP_LOGW(MQTT_HUMIDITY_TAG, "Invalid frequency value received: %s", message);
-                }
-                return;
-            }
-
-            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), INSOLATION_TOPIC, user_mac, device_mac, true);
-
-            if (strcmp(topic, frequency_topic) == 0) {
-                ESP_LOGI(MQTT_INSOLATION_TAG, "Handling insolation frequency change request: %s", message);
-                int new_delay = atoi(message); 
-                if (new_delay > 0) {
-                    insolation_delay = new_delay; 
-                    ESP_LOGI(MQTT_INSOLATION_TAG, "Insolation frequency updated to %d minutes.", insolation_delay);
-                } else {
-                    ESP_LOGW(MQTT_INSOLATION_TAG, "Invalid frequency value received: %s", message);
-                }
-                return;
-            }
-        }
-        break;
-
-    default:
-        break;
-    }
-}
 
 static void publish_temperature(void *pvParameters)
 {
@@ -248,7 +120,7 @@ static void publish_temperature(void *pvParameters)
             save_message_to_nvs(payload, TEMPERATURE);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(temperature_delay));  
+        vTaskDelay(pdMS_TO_TICKS(temperature_delay * 60 * 1000));  
     }
 }
 
@@ -287,7 +159,7 @@ static void publish_humidity(void *pvParameters)
             save_message_to_nvs(payload, HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay));  
+        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay * 60 * 1000));  
     }
 }
 
@@ -326,7 +198,7 @@ static void publish_soil_humidity(void *pvParameters)
             save_message_to_nvs(payload, SOIL_HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay));  
+        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay * 60 * 1000));  
     }
 }
 
@@ -365,7 +237,190 @@ static void publish_insolation(void *pvParameters)
             save_message_to_nvs(payload, INSOLATION);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(insolation_delay));  
+        vTaskDelay(pdMS_TO_TICKS(insolation_delay * 60 * 1000));  
+    }
+}
+
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+    esp_mqtt_event_handle_t event = event_data;
+    esp_mqtt_client_handle_t client = event->client;
+
+    switch ((esp_mqtt_event_id_t)event_id) {
+
+    case MQTT_EVENT_CONNECTED:
+        ESP_LOGI(MQTT, "MQTT_EVENT_CONNECTED");
+        mqtt_connected = true;
+        mqtt_retry_count = 0;
+
+        char topic[256];
+
+        snprintf(topic, sizeof(topic), WATER_REQUEST_TOPIC, user_mac, device_mac);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Subscribed to water request topic: %s", topic);
+
+        create_topic_with_frequency(topic, sizeof(topic), SOIL_HUMIDITY_TOPIC, user_mac, device_mac, true);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Subscribed to soil moist frequency change topic: %s", topic);
+
+        create_topic_with_frequency(topic, sizeof(topic), TEMPERATURE_TOPIC, user_mac, device_mac, true);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_TEMPERATURE_TAG, "Subscribed to temperature frequency change topic: %s", topic);
+
+        create_topic_with_frequency(topic, sizeof(topic), AIR_HUMIDITY_TOPIC, user_mac, device_mac, true);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_HUMIDITY_TAG, "Subscribed to air humidity frequency change topic: %s", topic);
+
+        create_topic_with_frequency(topic, sizeof(topic), INSOLATION_TOPIC, user_mac, device_mac, true);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_INSOLATION_TAG, "Subscribed to insolation frequency change topic: %s", topic);
+
+        resend_messages_from_nvs(client);
+        break;
+
+    case MQTT_EVENT_DISCONNECTED:
+        ESP_LOGI(MQTT, "MQTT_EVENT_DISCONNECTED");
+
+        mqtt_connected = false;
+
+        if (!is_wifi_connected) {
+            ESP_LOGW(MQTT, "No Wi-Fi connection. MQTT reconnection delayed.");
+            break;
+        }
+
+        ESP_LOGI(MQTT, "Retrying connection to the MQTT broker...");
+        mqtt_reconnect_with_backoff(client);  
+        break;
+
+    case MQTT_EVENT_SUBSCRIBED:
+        if (event->topic) {
+            ESP_LOGI(MQTT, "Subscribed to topic %s", event->topic);
+        } else {
+            ESP_LOGW(MQTT, "Subscribed to topic: <no topic>");
+        }
+        break;
+
+    case MQTT_EVENT_PUBLISHED:
+        ESP_LOGI(MQTT, "Message published successfully, msg_id=%d", event->msg_id);
+        break;
+
+    case MQTT_EVENT_DATA:
+        ESP_LOGI(MQTT, "event->topic_len: %d, event->data_len: %d", event->topic_len, event->data_len);
+
+        if (event->topic_len > 0 && event->data_len > 0)
+        {
+            char topic[event->topic_len + 1];
+            char message[event->data_len + 1];
+
+            strncpy(topic, event->topic, event->topic_len);
+            topic[event->topic_len] = '\0';
+
+            strncpy(message, event->data, event->data_len);
+            message[event->data_len] = '\0';
+
+            ESP_LOGI(MQTT, "Received message on topic: %s -> %s", topic, message);
+
+            char expected_topic[128];
+            snprintf(expected_topic, sizeof(expected_topic), WATER_REQUEST_TOPIC, user_mac, device_mac);
+
+            if (strcmp(topic, expected_topic) == 0) {
+                ESP_LOGI(MQTT, "Handling water request: %s", message);
+                int watering_time_sec = atoi(message); 
+                if (watering_time_sec > 0) {
+                    ESP_LOGI(MQTT, "Watering for %d seconds.", watering_time_sec);
+                    // todo - implement logic for plant watering
+                } else {
+                    ESP_LOGW(MQTT, "Invalid watering time received: %s", message);
+                }
+                return;
+            }
+
+            char frequency_topic[128];
+            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), SOIL_HUMIDITY_TOPIC, user_mac, device_mac, true);
+
+            if (strcmp(topic, frequency_topic) == 0) {
+                ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Handling soil moisture frequency change request: %s", message);
+                int new_delay = atoi(message); 
+                if (new_delay > 0) {
+                    soil_humidity_delay = new_delay; 
+                    ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Soil moisture frequency updated to %d minutes.", soil_humidity_delay);
+
+                    // Stop and restart the soil humidity task
+                    if (soil_humidity_task_handle != NULL) {
+                        vTaskDelete(soil_humidity_task_handle);
+                    }
+                    xTaskCreate(publish_soil_humidity, "publish_soil_humidity", 4096, (void*)mqtt_client, 5, &soil_humidity_task_handle);
+
+                } else {
+                    ESP_LOGW(MQTT_SOIL_HUMIDITY_TAG, "Invalid frequency value received: %s", message);
+                }
+                return;
+            }
+
+            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), TEMPERATURE_TOPIC, user_mac, device_mac, true);
+
+            if (strcmp(topic, frequency_topic) == 0) {
+                ESP_LOGI(MQTT, "Handling temperature frequency change request: %s", message);
+                int new_delay = atoi(message); 
+                if (new_delay > 0) {
+                    temperature_delay = new_delay; 
+                    ESP_LOGI(MQTT_TEMPERATURE_TAG, "Temperature frequency updated to %d minutes.", temperature_delay);
+
+                    if (temperature_task_handle != NULL) {
+                        vTaskDelete(temperature_task_handle);
+                    }
+                    xTaskCreate(publish_temperature, "publish_temperature", 4096, (void*)mqtt_client, 5, &temperature_task_handle);
+
+                } else {
+                    ESP_LOGW(MQTT_TEMPERATURE_TAG, "Invalid frequency value received: %s", message);
+                }
+                return;
+            }
+
+            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), AIR_HUMIDITY_TOPIC, user_mac, device_mac, true);
+
+            if (strcmp(topic, frequency_topic) == 0) {
+                ESP_LOGI(MQTT_HUMIDITY_TAG, "Handling air humidity frequency change request: %s", message);
+                int new_delay = atoi(message); 
+                if (new_delay > 0) {
+                    air_humidity_delay = new_delay; 
+                    ESP_LOGI(MQTT_HUMIDITY_TAG, "Air humidity frequency updated to %d minutes.", air_humidity_delay);
+
+                    if (humidity_task_handle != NULL) {
+                        vTaskDelete(humidity_task_handle);
+                    }
+                    xTaskCreate(publish_humidity, "publish_humidity", 4096, (void*)mqtt_client, 5, &humidity_task_handle);
+
+                } else {
+                    ESP_LOGW(MQTT_HUMIDITY_TAG, "Invalid frequency value received: %s", message);
+                }
+                return;
+            }
+
+            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), INSOLATION_TOPIC, user_mac, device_mac, true);
+
+            if (strcmp(topic, frequency_topic) == 0) {
+                ESP_LOGI(MQTT_INSOLATION_TAG, "Handling insolation frequency change request: %s", message);
+                int new_delay = atoi(message); 
+                if (new_delay > 0) {
+                    insolation_delay = new_delay; 
+                    ESP_LOGI(MQTT_INSOLATION_TAG, "Insolation frequency updated to %d minutes.", insolation_delay);
+
+                    if (insolation_task_handle != NULL) {
+                        vTaskDelete(insolation_task_handle);
+                    }
+                    xTaskCreate(publish_insolation, "publish_insolation", 4096, (void*)mqtt_client, 5, &insolation_task_handle);
+
+                } else {
+                    ESP_LOGW(MQTT_INSOLATION_TAG, "Invalid frequency value received: %s", message);
+                }
+                return;
+            }
+        } 
+        break;
+
+    default:
+        break;
     }
 }
 
@@ -395,28 +450,6 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(mqtt_client);
 
     mqtt_connected = true;
-
-    char topic[256];
-
-    snprintf(topic, sizeof(topic), WATER_REQUEST_TOPIC, user_mac, device_mac);
-    esp_mqtt_client_subscribe(mqtt_client, topic, 1);
-    ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Subscribed to water request topic: %s", topic);
-
-    create_topic_with_frequency(topic, sizeof(topic), SOIL_HUMIDITY_TOPIC, user_mac, device_mac, true);
-    esp_mqtt_client_subscribe(mqtt_client, topic, 1);
-    ESP_LOGI(MQTT_SOIL_HUMIDITY_TAG, "Subscribed to soil moist frequency change topic: %s", topic);
-
-    create_topic_with_frequency(topic, sizeof(topic), TEMPERATURE_TOPIC, user_mac, device_mac, true);
-    esp_mqtt_client_subscribe(mqtt_client, topic, 1);
-    ESP_LOGI(MQTT_TEMPERATURE_TAG, "Subscribed to temperature frequency change topic: %s", topic);
-
-    create_topic_with_frequency(topic, sizeof(topic), AIR_HUMIDITY_TOPIC, user_mac, device_mac, true);
-    esp_mqtt_client_subscribe(mqtt_client, topic, 1);
-    ESP_LOGI(MQTT_HUMIDITY_TAG, "Subscribed to air humidity frequency change topic: %s", topic);
-
-    create_topic_with_frequency(topic, sizeof(topic), INSOLATION_TOPIC, user_mac, device_mac, true);
-    esp_mqtt_client_subscribe(mqtt_client, topic, 1);
-    ESP_LOGI(MQTT_INSOLATION_TAG, "Subscribed to insolation frequency change topic: %s", topic);
 
     xTaskCreate(publish_temperature, "publish_temperature", 4096, (void*)mqtt_client, 5, NULL);
     xTaskCreate(publish_humidity, "publish_humidity", 4096, (void*)mqtt_client, 5, NULL);
