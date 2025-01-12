@@ -15,6 +15,8 @@ public class ThresholdVerifier {
   private final NotificationService notificationService;
 
   public void verifyThreshold(MeasurementEnum measurement, Double lowerThreshold, Double upperThreshold, Double value, Device device) {
+      System.out.println("Verifying thresholds...");
+
       if (Objects.nonNull(lowerThreshold) && (lowerThreshold > value)) {
           notificationService.createNotification(device, measurement, true);
           notificationHandler.sendMessage(

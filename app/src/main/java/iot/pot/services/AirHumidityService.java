@@ -11,6 +11,7 @@ import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -25,6 +26,7 @@ public class AirHumidityService implements MeasurementInterface {
         String messageString = new String(message);
 
         try {
+            System.out.println(messageString);
             AirHumidity airHumidity = objectMapper.readValue(messageString, AirHumidity.class);
             airHumidity.setDevice(device);
 
@@ -40,6 +42,8 @@ public class AirHumidityService implements MeasurementInterface {
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

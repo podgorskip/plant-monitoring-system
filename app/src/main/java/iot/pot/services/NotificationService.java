@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
-    private NotificationRepository notificationRepository;
+    private final NotificationRepository notificationRepository;
 
     public void createNotification(Device device, MeasurementEnum measurement, Boolean min) {
         Notification notification = Notification.builder()

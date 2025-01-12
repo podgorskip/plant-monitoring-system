@@ -29,21 +29,21 @@ public class TemperatureService implements MeasurementInterface {
             Temperature temperature = objectMapper.readValue(messageString, Temperature.class);
             temperature.setDevice(device);
 
+            temperatureRepository.save(temperature);
+
             thresholdVerifier.verifyThreshold(
-                    MeasurementEnum.AIR_HUMIDITY,
-                    device.getAirHumidityLowerThreshold(),
+                    MeasurementEnum.TEMPERATURE,
+                    device.getTemperatureLowerThreshold(),
                     device.getAirHumidityUpperThreshold(),
                     temperature.getValue(),
                     device
             );
 
-            temperatureRepository.save(temperature);
-
         } catch (JsonProcessingException e) {
             System.out.println(e);
             throw new RuntimeException();
         } catch (Exception e) {
-            System.out.println(e);
+            throw new RuntimeException(e);
         }
     }
 

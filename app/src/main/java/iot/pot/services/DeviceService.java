@@ -8,23 +8,22 @@ import iot.pot.model.response.FrequencyResponse;
 import iot.pot.model.response.ThresholdResponse;
 import iot.pot.mqtt.MqttConnector;
 import iot.pot.mqtt.SubscribeParam;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.EnumMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 @Service
-public class DeviceService {
+public class DeviceService implements CommandLineRunner {
     private final DeviceRepository deviceRepository;
     private final MqttConnector mqttConnector;
     private final AirHumidityService airHumidityService;
     private final TemperatureService temperatureService;
     private final SoilHumidityService soilHumidityService;
     private final InsolationService insolationService;
-    private final WaterRequestService waterRequestService;
 
     private final EnumMap<MeasurementEnum, BiFunction<Device, Pageable, Page<? extends Measurement>>> measurementFetchers = new EnumMap<>(MeasurementEnum.class);
 
@@ -34,8 +33,7 @@ public class DeviceService {
             AirHumidityService airHumidityService,
             TemperatureService temperatureService,
             SoilHumidityService soilHumidityService,
-            InsolationService insolationService,
-            WaterRequestService waterRequestService
+            InsolationService insolationService
     ) {
         this.deviceRepository = deviceRepository;
         this.mqttConnector = mqttConnector;
@@ -43,7 +41,6 @@ public class DeviceService {
         this.temperatureService = temperatureService;
         this.soilHumidityService = soilHumidityService;
         this.insolationService = insolationService;
-        this.waterRequestService = waterRequestService;
 
         measurementFetchers.put(MeasurementEnum.TEMPERATURE, temperatureService::getByDevice);
         measurementFetchers.put(MeasurementEnum.AIR_HUMIDITY, airHumidityService::getByDevice);
@@ -58,12 +55,7 @@ public class DeviceService {
                 .build();
 
         deviceRepository.save(device);
-        mqttConnector.subscribe(device, List.of(
-                new SubscribeParam(MeasurementEnum.AIR_HUMIDITY, airHumidityService),
-                new SubscribeParam(MeasurementEnum.TEMPERATURE, temperatureService),
-                new SubscribeParam(MeasurementEnum.SOIL_HUMIDITY, soilHumidityService),
-                new SubscribeParam(MeasurementEnum.INSOLATION, insolationService)
-        ));
+        connectMqtt(device);
     }
 
     public void setThresholds(Long id, MeasurementEnum measurementEnum, Double min, Double max) {
@@ -77,6 +69,7 @@ public class DeviceService {
         setFrequencyThresholds(device, measurement, frequency);
         deviceRepository.save(device);
         String topic = String.format("%s/%s/%s/frequency", device.getUser().getMac(), device.getMac(), measurement.getMeasurementDetails().getTopic());
+        System.out.println(topic);
         mqttConnector.publish(topic, String.valueOf(frequency));
     }
 
@@ -139,6 +132,15 @@ public class DeviceService {
         }
     }
 
+    private void connectMqtt(Device device) {
+        mqttConnector.subscribe(device, List.of(
+                new SubscribeParam(MeasurementEnum.AIR_HUMIDITY, airHumidityService),
+                new SubscribeParam(MeasurementEnum.TEMPERATURE, temperatureService),
+                new SubscribeParam(MeasurementEnum.SOIL_HUMIDITY, soilHumidityService),
+                new SubscribeParam(MeasurementEnum.INSOLATION, insolationService)
+        ));
+    }
+
     private void setMeasurementThresholds(Device device, MeasurementEnum measurement, Double min, Double max) {
         switch (measurement) {
             case TEMPERATURE -> {
@@ -158,5 +160,10 @@ public class DeviceService {
                 device.setInsolationUpperThreshold(max);
             }
         }
+    }
+
+    @Override
+    public void run(String... args) throws Exception {
+        deviceRepository.findAll().forEach(this::connectMqtt);
     }
 }

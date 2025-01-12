@@ -23,6 +23,8 @@ public class SmsService implements MeasurementNotificationHandler {
 
     @Override
     public void sendMessage(User user, String message) {
+        System.out.println("Sending measurement alert.");
+
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
         Message.creator(
                 new PhoneNumber(EXTENSION + user.getPhoneNumber()),
