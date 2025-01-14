@@ -24,6 +24,7 @@
 #include "esp_gap_ble_api.h"
 #include "esp_gatts_api.h"
 #include "esp_bt_main.h"
+#include "sensor_manager.h"
 
 // GPIO for LED
 #define LED_GPIO_PIN GPIO_NUM_2
@@ -277,7 +278,7 @@ void ble_gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatt_if, 
             service_handle = param->create.service_handle;
             esp_ble_gatts_start_service(service_handle);
 
-            esp_attr_value_t ssid_attr_value = {
+             esp_attr_value_t ssid_attr_value = {
                 .attr_max_len = CHAR_VAL_LEN_MAX,
                 .attr_len = sizeof(ssid_value),
                 .attr_value = ssid_value,
@@ -285,16 +286,39 @@ void ble_gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatt_if, 
 
             ret = esp_ble_gatts_add_char(
                 service_handle,
-                &SSID_CHAR_UUID,
+                &SSID_CHAR_UUID, 
                 ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
                 ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE,
-                &ssid_attr_value, 
-                &ssid_control     
+                &ssid_attr_value,
+                &ssid_control
             );
 
-            if (ret != ESP_OK) {
-                ESP_LOGE(BLE_GATT, "Failed to add SSID characteristic, error code = %d", ret);
+            if (ret == ESP_OK) {
+                ESP_LOGI(BLE_GATT, "SSID characteristic (0xFF01) added successfully.");
+                uint8_t ssid_desc[] = "Wi-Fi SSID"; 
+                esp_attr_value_t ssid_desc_value = {
+                    .attr_max_len = sizeof(ssid_desc),
+                    .attr_len = sizeof(ssid_desc),
+                    .attr_value = ssid_desc,
+                };
+
+                ret = esp_ble_gatts_add_char_descr(
+                    service_handle,
+                    &(esp_bt_uuid_t){.len = ESP_UUID_LEN_16, .uuid.uuid16 = ESP_GATT_UUID_CHAR_DESCRIPTION}, // 0x2901 UUID
+                    ESP_GATT_PERM_READ,
+                    &ssid_desc_value,
+                    NULL
+                );
+
+                if (ret == ESP_OK) {
+                    ESP_LOGI(BLE_GATT, "SSID characteristic description added successfully.");
+                } else {
+                    ESP_LOGE(BLE_GATT, "Failed to add SSID characteristic description, error code = %d", ret);
+                }
+            } else {
+                ESP_LOGE(BLE_GATT, "Failed to add SSID characteristic (0xFF01), error code = %d", ret);
             }
+
 
             esp_attr_value_t password_attr_value = {
                 .attr_max_len = CHAR_VAL_LEN_MAX,
@@ -493,6 +517,20 @@ void ble_init(void) {
 
     ESP_LOGI(BLE, "Bluetooth initialized successfully!");
 
+    // Advertisement data
+    static const uint8_t adv_data[] = {
+        0x02, 0x01, 0x06,                         // General discoverable, BR/EDR not supported
+        0x0A, 0x09, 'S', 'm', 'a', 'r', 't', ' ', 'P', 'o', 't', // Complete Local Name
+        0x03, 0x03, 0xCD, 0xAB                    // UUID for the service
+    };
+
+    ret = esp_ble_gap_config_adv_data_raw(adv_data, sizeof(adv_data));
+    if (ret != ESP_OK) {
+        ESP_LOGE(BLE, "Failed to set advertising data: %s", esp_err_to_name(ret));
+        return;
+    }
+    ESP_LOGI(BLE, "Advertising data set successfully.");
+
     ret = esp_ble_gap_register_callback(ble_gap_event_handler);
     if (ret != ESP_OK) {
         ESP_LOGE(BLE, "Failed to register GAP event handler: %s", esp_err_to_name(ret));
@@ -690,6 +728,8 @@ void app_main(void)
     xTaskCreate(blink_task, "blink_task", 2048, NULL, 10, NULL);
 
     check_existing_wifi_and_broker();
+
+    sensor_manager_init();  // Initialize all sensors
 
     xTaskCreate(start_mqtt_task, "mqtt_task", 4096, NULL, 5, NULL);
 
