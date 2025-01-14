@@ -11,5 +11,7 @@ extern char device_mac[18];
 #define AIR_HUMIDITY_TOPIC "%s/%s/air_humidity"
 #define SOIL_HUMIDITY_TOPIC "%s/%s/soil_humidity"
 #define INSOLATION_TOPIC "%s/%s/insolation"
+#define INSOLATION_DIGITAL_TOPIC "%s/%s/insolation_digital"
+
 
 #endif
