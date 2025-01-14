@@ -35,15 +35,16 @@ export class DeviceComponent implements OnInit {
     this.loadThresholds();
   }
 
-  private loadThresholds(): void {
+  loadThresholds(): void {
     this.thresholds = [];
     this.measurementEnumKeys.forEach((key) => {
       const measurementKey = key as keyof typeof MeasurementEnum;
       this.deviceService.getDeviceThreshold(this.device.id, measurementKey).subscribe({
         next: (threshold_value) => {
-          this.thresholds.push({
+          const parsedThreshold = JSON.parse(threshold_value);
+            this.thresholds.push({
             measurement: MeasurementEnum[measurementKey],
-            threshold: threshold_value,
+            threshold: parsedThreshold,
           });
         },
         error: (err) =>
@@ -51,6 +52,7 @@ export class DeviceComponent implements OnInit {
       });
     });
   }
+  
 
   private loadFrequencies(): void {
     this.frequencies = [];
@@ -106,6 +108,41 @@ export class DeviceComponent implements OnInit {
         });
     }
   }
+
+  formatPrettyDate(dateInput: string | Date | number[]): string {
+    console.log(dateInput);
+
+    // Check if input is an array
+    if (Array.isArray(dateInput)) {
+        // Extract the first 6 elements (year, month, day, hour, minute, second)
+        // Ignore the 7th value (assumed to be invalid milliseconds)
+        const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+
+        // Create a new Date object
+        dateInput = new Date(year, month - 1, day, hour, minute, second);
+    }
+
+    // Check if input is a valid date string or Date object
+    const date = typeof dateInput === 'string' || dateInput instanceof Date
+        ? new Date(dateInput)
+        : null;
+
+    if (!date || isNaN(date.getTime())) {
+        console.error("Invalid input: dateInput is not a valid date or format", dateInput);
+        return "Invalid Date";
+    }
+
+    // Format date to a pretty string
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+    });
+}
+
 
   sendWaterRequest(): void {
     if (this.wateringTime <= 0) {
