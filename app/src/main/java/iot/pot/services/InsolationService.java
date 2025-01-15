@@ -31,7 +31,6 @@ public class InsolationService implements MeasurementInterface {
             System.out.println(messageString);
             Insolation insolation = objectMapper.readValue(messageString, Insolation.class);
             insolation.setDevice(device);
-
             insolationRepository.save(insolation);
 
             thresholdVerifier.verifyThreshold(

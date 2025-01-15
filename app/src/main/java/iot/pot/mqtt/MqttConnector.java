@@ -126,7 +126,6 @@ public class MqttConnector implements MqttCallback {
                     })
                     .findFirst()
                     .ifPresent(param -> {
-                        System.out.println(param);
                         param.getDataHandler().save(message.getPayload(), device);
                     });
         });

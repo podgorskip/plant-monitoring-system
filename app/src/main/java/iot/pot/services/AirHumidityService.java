@@ -28,6 +28,7 @@ public class AirHumidityService implements MeasurementInterface {
             System.out.println(messageString);
             AirHumidity airHumidity = objectMapper.readValue(messageString, AirHumidity.class);
             airHumidity.setDevice(device);
+            airHumidityRepository.save(airHumidity);
 
             thresholdVerifier.verifyThreshold(
                     MeasurementEnum.AIR_HUMIDITY,
@@ -36,9 +37,6 @@ public class AirHumidityService implements MeasurementInterface {
                     airHumidity.getValue(),
                     device
             );
-
-            airHumidityRepository.save(airHumidity);
-
         } catch (JsonProcessingException e) {
             throw new RuntimeException();
         } catch (Exception e) {

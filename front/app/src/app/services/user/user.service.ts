@@ -16,8 +16,7 @@ export class UserService {
     return this.http.get<Device[]>(`${this.apiUrl}/${id}/devices`);
   }
 
-  createUser(user: UserRequest, userMac: string, deviceMac: string): void {
-    const response =  firstValueFrom(this.http.post<number>(`${this.apiUrl}/${userMac}/devices/${deviceMac}`, user));
-    console.log(response)
+  createUser(user: UserRequest, userMac: string, deviceMac: string): Promise<any> {
+    return firstValueFrom(this.http.post<number>(`${this.apiUrl}/${userMac}/devices/${deviceMac}`, user));
   }
 }

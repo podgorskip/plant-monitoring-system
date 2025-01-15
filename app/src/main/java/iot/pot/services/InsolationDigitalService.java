@@ -28,6 +28,7 @@ public class InsolationDigitalService implements MeasurementInterface {
             System.out.println(messageString);
             InsolationDigital insolationDigital = objectMapper.readValue(messageString, InsolationDigital.class);
             insolationDigital.setDevice(device);
+            insolationDigitalRepository.save(insolationDigital);
 
             thresholdVerifier.verifyThreshold(
                     MeasurementEnum.AIR_HUMIDITY,
@@ -36,8 +37,6 @@ public class InsolationDigitalService implements MeasurementInterface {
                     insolationDigital.getValue(),
                     device
             );
-
-            insolationDigitalRepository.save(insolationDigital);
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();

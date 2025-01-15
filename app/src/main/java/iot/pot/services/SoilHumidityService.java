@@ -38,7 +38,6 @@ public class SoilHumidityService implements MeasurementInterface {
             System.out.println(messageString);
             SoilHumidity soilHumidity = objectMapper.readValue(messageString, SoilHumidity.class);
             soilHumidity.setDevice(device);
-
             soilHumidityRepository.save(soilHumidity);
 
             thresholdVerifier.verifyThreshold(

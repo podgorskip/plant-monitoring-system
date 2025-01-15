@@ -11,17 +11,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UserService userService;
-//    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public User authenticate(String email, String password) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new AuthenticationException("Authentication failure. Incorrect email."));
 
-//        if (!passwordEncoder.matches(password, user.getPassword())) {
-//            throw new AuthenticationException("Authentication failure. Incorrect password.");
-//        }
-
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new AuthenticationException("Authentication failure. Incorrect password.");
         }
 
