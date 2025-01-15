@@ -215,34 +215,38 @@ esp_err_t get_wifi_password(char *password, size_t password_size) {
 }
 
 esp_err_t get_broker_url(char *url, size_t url_size) {
-    const char *hardcoded_url = "mqtt://192.168.9.125:1883"; // Replace with your broker URL
-    if (strlen(hardcoded_url) >= url_size) {
-        return ESP_ERR_INVALID_SIZE; // Ensure buffer is large enough
+    nvs_handle_t my_handle;
+    esp_err_t ret = nvs_open("broker_config", NVS_READWRITE, &my_handle);
+    if (ret != ESP_OK) {
+        return ret;
     }
-    strncpy(url, hardcoded_url, url_size - 1);
-    url[url_size - 1] = '\0'; // Null-terminate the string
-    return ESP_OK;
+    ret = nvs_get_str(my_handle, "url", url, &url_size);
+    nvs_close(my_handle);
+    return ret;
 }
 
 esp_err_t get_broker_username(char *username, size_t username_size) {
-    const char *hardcoded_username = "patryk"; // Replace with your username
-    if (strlen(hardcoded_username) >= username_size) {
-        return ESP_ERR_INVALID_SIZE; // Ensure buffer is large enough
+    nvs_handle_t my_handle;
+    esp_err_t ret = nvs_open("broker_config", NVS_READWRITE, &my_handle);
+    if (ret != ESP_OK) {
+        return ret;
     }
-    strncpy(username, hardcoded_username, username_size - 1);
-    username[username_size - 1] = '\0'; // Null-terminate the string
-    return ESP_OK;
+    ret = nvs_get_str(my_handle, "username", username, &username_size);
+    nvs_close(my_handle);
+    return ret;
 }
 
 esp_err_t get_broker_password(char *password, size_t password_size) {
-    const char *hardcoded_password = "Haslo1"; // Replace with your password
-    if (strlen(hardcoded_password) >= password_size) {
-        return ESP_ERR_INVALID_SIZE; // Ensure buffer is large enough
+    nvs_handle_t my_handle;
+    esp_err_t ret = nvs_open("broker_config", NVS_READWRITE, &my_handle);
+    if (ret != ESP_OK) {
+        return ret;
     }
-    strncpy(password, hardcoded_password, password_size - 1);
-    password[password_size - 1] = '\0'; // Null-terminate the string
-    return ESP_OK;
+    ret = nvs_get_str(my_handle, "password", password, &password_size);
+    nvs_close(my_handle);
+    return ret;
 }
+
 esp_err_t get_user_mac(char *mac) {
     nvs_handle_t my_handle;
     size_t mac_size = 18;
