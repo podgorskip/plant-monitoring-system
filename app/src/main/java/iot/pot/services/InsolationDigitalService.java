@@ -2,9 +2,9 @@ package iot.pot.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import iot.pot.database.model.AirHumidity;
 import iot.pot.database.model.Device;
-import iot.pot.database.repositories.AirHumidityRepository;
+import iot.pot.database.model.InsolationDigital;
+import iot.pot.database.repositories.InsolationDigitalRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.validation.ThresholdVerifier;
@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AirHumidityService implements MeasurementInterface {
-    private final AirHumidityRepository airHumidityRepository;
+public class InsolationDigitalService implements MeasurementInterface {
+    private final InsolationDigitalRepository insolationDigitalRepository;
     private final ThresholdVerifier thresholdVerifier;
     private final ObjectMapper objectMapper;
 
@@ -26,18 +26,18 @@ public class AirHumidityService implements MeasurementInterface {
 
         try {
             System.out.println(messageString);
-            AirHumidity airHumidity = objectMapper.readValue(messageString, AirHumidity.class);
-            airHumidity.setDevice(device);
+            InsolationDigital insolationDigital = objectMapper.readValue(messageString, InsolationDigital.class);
+            insolationDigital.setDevice(device);
 
             thresholdVerifier.verifyThreshold(
                     MeasurementEnum.AIR_HUMIDITY,
                     device.getAirHumidityLowerThreshold(),
                     device.getAirHumidityUpperThreshold(),
-                    airHumidity.getValue(),
+                    insolationDigital.getValue(),
                     device
             );
 
-            airHumidityRepository.save(airHumidity);
+            insolationDigitalRepository.save(insolationDigital);
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();
@@ -46,7 +46,7 @@ public class AirHumidityService implements MeasurementInterface {
         }
     }
 
-    public Page<AirHumidity> getByDevice(Device device, Pageable pageable) {
-        return airHumidityRepository.findByDevice(device, pageable);
+    public Page<InsolationDigital> getByDevice(Device device, Pageable pageable) {
+        return insolationDigitalRepository.findByDevice(device, pageable);
     }
 }
