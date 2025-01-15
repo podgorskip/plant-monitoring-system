@@ -20,6 +20,9 @@ export class DeviceComponent implements OnInit {
   thresholds: { measurement: MeasurementEnum; threshold: Threshold }[] = [];
   frequencies: { measurement: MeasurementEnum; frequency: Frequency }[] = []; 
   measurementEnumKeys = Object.keys(MeasurementEnum);
+  measurementEnumKeysFiltered = Object.keys(MeasurementEnum).filter(
+    (key) => key !== 'INSOLATION_DIGITAL'
+  );
   selectedMeasurement?: MeasurementEnum;
   thresholdMin?: number;
   thresholdMax?: number;
@@ -27,23 +30,37 @@ export class DeviceComponent implements OnInit {
   frequencyValue?: number;
   selectedMeasurementTab!: string;
   paginatedMeasurements: { date: string; value: number }[] = [];
+  iconPath?: string;
   currentPage = 0;
 
   constructor(private deviceService: DeviceService) {}
 
   ngOnInit(): void {
     this.loadThresholds();
+    this.deviceService.getDeviceMeasurements(this.device.id, 'INSOLATION_DIGITAL').subscribe({
+      next: (data: { content: { date: string; value: number }[] }) => {
+        if (data.content && data.content.length > 0) {
+          this.iconPath = data.content[0].value === 0 ? 'assets/sun.png' : 'assets/moon.png'; 
+        } else {
+          console.log('No content available.');
+        }
+      },
+      error: (err) => {
+        console.error(`Failed to fetch device measurements: ${err}`);
+      }
+    });
   }
 
-  private loadThresholds(): void {
+  loadThresholds(): void {
     this.thresholds = [];
-    this.measurementEnumKeys.forEach((key) => {
+    this.measurementEnumKeysFiltered.forEach((key) => {
       const measurementKey = key as keyof typeof MeasurementEnum;
       this.deviceService.getDeviceThreshold(this.device.id, measurementKey).subscribe({
         next: (threshold_value) => {
-          this.thresholds.push({
+          const parsedThreshold = JSON.parse(threshold_value);
+            this.thresholds.push({
             measurement: MeasurementEnum[measurementKey],
-            threshold: threshold_value,
+            threshold: parsedThreshold,
           });
         },
         error: (err) =>
@@ -51,6 +68,7 @@ export class DeviceComponent implements OnInit {
       });
     });
   }
+  
 
   private loadFrequencies(): void {
     this.frequencies = [];
@@ -106,6 +124,34 @@ export class DeviceComponent implements OnInit {
         });
     }
   }
+
+  formatPrettyDate(dateInput: string | Date | number[]): string {
+    console.log(dateInput);
+
+    if (Array.isArray(dateInput)) {
+        const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+        dateInput = new Date(year, month - 1, day, hour, minute, second);
+    }
+
+    const date = typeof dateInput === 'string' || dateInput instanceof Date
+        ? new Date(dateInput)
+        : null;
+
+    if (!date || isNaN(date.getTime())) {
+        console.error("Invalid input: dateInput is not a valid date or format", dateInput);
+        return "Invalid Date";
+    }
+
+    return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+    });
+}
+
 
   sendWaterRequest(): void {
     if (this.wateringTime <= 0) {

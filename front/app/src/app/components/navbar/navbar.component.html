@@ -10,6 +10,9 @@
         <li class="nav-item" *ngIf="authenticatedUser != undefined">
           <a class="nav-link" routerLink="devices">Devices</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" [routerLink]="['/users', '123', 'devices', '123']">Register</a>
+        </li>
       </ul>
     </div>
   </nav>

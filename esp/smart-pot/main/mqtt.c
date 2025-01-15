@@ -7,35 +7,56 @@
 #include "parameter.h"
 #include "cJSON.h"
 #include "time.h"
+#include "sensor_manager.h"
+#include "bme280_sensor.h"
+#include "moisture_sensor.h"
+#include "water_sensor.h"
+#include "light_sensor.h"
+#include "pump_control.h"
+#include "esp_log.h"
+
 
 #define MAX_RETRY_COUNT 5
 #define MQTT_RECONNECT_DELAY pdMS_TO_TICKS(5000)
 
+#define MAX_PUMP_RUNTIME_MS 1000     // Max time the pump can run in one cycle (2 seconds)
+#define PUMP_COOLDOWN_MS 10000       // Time to wait before re-checking moisture (60 seconds)
+#define TAG "MAIN"
+
 #define WATER_REQUEST_TOPIC "%s/%s/soil_humidity/request"
 
-volatile int air_humidity_delay = 10;
-volatile int soil_humidity_delay = 10;
-volatile int temperature_delay = 10;
-volatile int insolation_delay = 10;
+volatile int air_humidity_delay = 1;
+volatile int soil_humidity_delay = 1;
+volatile int temperature_delay = 1;
+volatile int insolation_delay = 1;
+volatile int insolation_digital_delay = 1;
+
+volatile bool pump_state = false; // Current pump state
 
 TaskHandle_t temperature_task_handle = NULL;
 TaskHandle_t humidity_task_handle = NULL;
 TaskHandle_t soil_humidity_task_handle = NULL;
 TaskHandle_t insolation_task_handle = NULL;
+TaskHandle_t insolation_digital_task_handle = NULL;
+
+
 
 const char *MQTT = "MQTT";
 static const char *MQTT_TEMPERATURE_TAG = "MQTT (temperature)";
 static const char *MQTT_HUMIDITY_TAG = "MQTT (air humidity)";
 static const char *MQTT_SOIL_HUMIDITY_TAG = "MQTT (soil humidity)";
 static const char *MQTT_INSOLATION_TAG = "MQTT (insolation)";
+static const char *MQTT_INSOLATION_DIGITAL_TAG = "MQTT (insolation digital)";
 
 static int mqtt_retry_count = 0;
 
 // todo - update data from sensors
-volatile float temperature = 10.5;
-volatile float humidity = 30.5;
-volatile float soil_humidity = 30.1;
-volatile float insolation = 10.7;
+float temperature = 0.0;
+float humidity = 0.0;
+float soil_humidity = 0.0;
+float insolation = 0.0;
+int insolation_digital = 0;
+float water_level = 0.0;
 
 bool mqtt_connected = false;
 
@@ -55,6 +76,44 @@ esp_mqtt_client_handle_t mqtt_client = NULL;
 esp_mqtt_client_handle_t get_mqtt_client() {
     return mqtt_client;
 }
+
+void update_sensor_data(void) {
+    ESP_LOGI(TAG, "Updating sensor data...");
+
+    // Read temperature from BME280
+    if (bme280_get_temperature(&temperature) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to read temperature.");
+    }
+
+    // Read humidity from BME280
+    if (bme280_get_humidity(&humidity) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to read humidity.");
+    }
+
+    // Read soil humidity from moisture sensor
+    soil_humidity = moisture_sensor_get_percentage(moisture_sensor_read());
+
+    // Read light intensity (analog value)
+    insolation = light_sensor_get_brightness_percentage();
+
+    insolation_digital = light_sensor_get_digital_state();
+
+    // Read water level (analog value)
+    water_level = water_sensor_read();
+
+
+    // Log updated values
+    ESP_LOGI(TAG, "Sensor Data → Temp: %.2f°C, Humidity: %.2f%%, Soil Moisture: %.2f%%, Insolation: %.2f, Water Level: %.2f, Insolation digital: %d",
+             temperature, humidity, soil_humidity, insolation, water_level, insolation_digital);
+}
+
+void sensor_task(void *pvParameter) {
+    while (1) {
+        update_sensor_data();
+        vTaskDelay(pdMS_TO_TICKS(5000));  // Update every 5 seconds
+    }
+}
+
 
 void create_topic_with_frequency(char *output, size_t output_size, const char *base_topic, const char *user_mac, const char *device_mac, bool add_frequency) {
     snprintf(output, output_size, base_topic, user_mac, device_mac);
@@ -105,6 +164,10 @@ static void publish_temperature(void *pvParameters)
 
             payload = cJSON_Print(json);
 
+            ESP_LOGI("payload", "Payload: %s", payload);
+            ESP_LOGI("topic", "Topic: %s", topic);
+
+
             int msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 0);
             if (msg_id == -1) {
                 ESP_LOGE(MQTT_TEMPERATURE_TAG, "Failed to publish message.");
@@ -120,7 +183,7 @@ static void publish_temperature(void *pvParameters)
             save_message_to_nvs(payload, TEMPERATURE);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(temperature_delay * 60 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(temperature_delay * 10 * 1000));  
     }
 }
 
@@ -159,7 +222,7 @@ static void publish_humidity(void *pvParameters)
             save_message_to_nvs(payload, HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay * 60 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay * 10 * 1000));  
     }
 }
 
@@ -198,7 +261,7 @@ static void publish_soil_humidity(void *pvParameters)
             save_message_to_nvs(payload, SOIL_HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay * 60 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay * 10 * 1000));  
     }
 }
 
@@ -237,7 +300,46 @@ static void publish_insolation(void *pvParameters)
             save_message_to_nvs(payload, INSOLATION);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(insolation_delay * 60 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(insolation_delay * 10 * 1000));  
+    }
+}
+
+static void publish_insolation_digital(void *pvParameters)
+{
+    esp_mqtt_client_handle_t client = (esp_mqtt_client_handle_t)pvParameters;
+    char *payload = NULL;
+    char topic[100];
+    snprintf(topic, sizeof(topic), INSOLATION_DIGITAL_TOPIC, user_mac, device_mac);  
+
+    while (1) {
+        if (mqtt_connected) {
+            time_t now;
+            time(&now);
+            struct tm timeinfo;
+            localtime_r(&now, &timeinfo);
+
+            cJSON *json = cJSON_CreateObject();
+            cJSON_AddNumberToObject(json, "value", insolation_digital);
+            cJSON_AddStringToObject(json, "unit", "int");
+            cJSON_AddNumberToObject(json, "timestamp", (int)now);
+
+            payload = cJSON_Print(json);
+
+            int msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 0);
+            if (msg_id == -1) {
+                ESP_LOGE(MQTT_INSOLATION_DIGITAL_TAG, "Failed to publish message.");
+            } else {
+                ESP_LOGI(MQTT_INSOLATION_DIGITAL_TAG, "Published: %s", payload);
+            }
+
+            cJSON_Delete(json); 
+            free(payload);
+        } else {
+            ESP_LOGW(MQTT_INSOLATION_DIGITAL_TAG, "No MQTT connection. Starting buffering.");
+            save_message_to_nvs(payload, INSOLATION_DIGITAL);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(insolation_digital_delay * 10 * 1000));  
     }
 }
 
@@ -274,6 +376,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         create_topic_with_frequency(topic, sizeof(topic), INSOLATION_TOPIC, user_mac, device_mac, true);
         esp_mqtt_client_subscribe(mqtt_client, topic, 1);
         ESP_LOGI(MQTT_INSOLATION_TAG, "Subscribed to insolation frequency change topic: %s", topic);
+
+        create_topic_with_frequency(topic, sizeof(topic), INSOLATION_DIGITAL_TOPIC, user_mac, device_mac, true);
+        esp_mqtt_client_subscribe(mqtt_client, topic, 1);
+        ESP_LOGI(MQTT_INSOLATION_DIGITAL_TAG, "Subscribed to insolation digital frequency change topic: %s", topic);
 
         resend_messages_from_nvs(client);
         break;
@@ -326,9 +432,13 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             if (strcmp(topic, expected_topic) == 0) {
                 ESP_LOGI(MQTT, "Handling water request: %s", message);
                 int watering_time_sec = atoi(message); 
-                if (watering_time_sec > 0) {
+                if (watering_time_sec > 0 && water_level > 20) {
                     ESP_LOGI(MQTT, "Watering for %d seconds.", watering_time_sec);
-                    // todo - implement logic for plant watering
+                    pump_on();
+                    pump_state = true;  
+                    vTaskDelay(pdMS_TO_TICKS(1000*watering_time_sec));  
+                    pump_off();
+                    pump_state = false; 
                 } else {
                     ESP_LOGW(MQTT, "Invalid watering time received: %s", message);
                 }
@@ -416,6 +526,26 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 }
                 return;
             }
+
+            create_topic_with_frequency(frequency_topic, sizeof(frequency_topic), INSOLATION_DIGITAL_TOPIC, user_mac, device_mac, true);
+
+            if (strcmp(topic, frequency_topic) == 0) {
+                ESP_LOGI(MQTT_INSOLATION_DIGITAL_TAG, "Handling insolation digital frequency change request: %s", message);
+                int new_delay = atoi(message); 
+                if (new_delay > 0) {
+                    insolation_digital_delay = new_delay; 
+                    ESP_LOGI(MQTT_INSOLATION_DIGITAL_TAG, "Insolation digital frequency updated to %d minutes.", insolation_digital_delay);
+
+                    if (insolation_digital_task_handle != NULL) {
+                        vTaskDelete(insolation_digital_task_handle);
+                    }
+                    xTaskCreate(publish_insolation_digital, "publish_insolation_digital", 4096, (void*)mqtt_client, 5, &insolation_digital_task_handle);
+
+                } else {
+                    ESP_LOGW(MQTT_INSOLATION_DIGITAL_TAG, "Invalid frequency value received: %s", message);
+                }
+                return;
+            }
         } 
         break;
 
@@ -429,6 +559,10 @@ static void mqtt_app_start(void)
     get_broker_url(saved_broker_url, broker_url_size);
     get_broker_username(saved_broker_username, broker_username_size);
     get_broker_password(saved_broker_password, broker_password_size);
+
+    ESP_LOGI(TAG, "Connecting to MQTT broker: %s", saved_broker_url);
+    ESP_LOGI(TAG, "Username: %s", saved_broker_username);
+    ESP_LOGI(TAG, "Password: %s", saved_broker_password);
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker = {
@@ -450,15 +584,18 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(mqtt_client);
 
     mqtt_connected = true;
-
+    pump_init();
+    xTaskCreate(sensor_task, "Sensor Task", 4096, NULL, 5, NULL);
     xTaskCreate(publish_temperature, "publish_temperature", 4096, (void*)mqtt_client, 5, NULL);
     xTaskCreate(publish_humidity, "publish_humidity", 4096, (void*)mqtt_client, 5, NULL);
     xTaskCreate(publish_soil_humidity, "publish_soil_humidity", 4096, (void*)mqtt_client, 5, NULL);
     xTaskCreate(publish_insolation, "publish_insolation", 4096, (void*)mqtt_client, 5, NULL);
+    xTaskCreate(publish_insolation_digital, "publish_insolation_digital", 4096, (void*)mqtt_client, 5, NULL);
 }
 
 void start_mqtt_task(void *pvParameters)
 {
+    ESP_LOGI(TAG, "Starting MQTT task...");
     while (!is_wifi_connected) {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }

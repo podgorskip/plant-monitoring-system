@@ -4,9 +4,11 @@ import iot.pot.database.model.Device;
 import iot.pot.messaging.MeasurementNotificationHandler;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.services.NotificationService;
+import iot.pot.utils.ExecutorsPool;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -18,25 +20,45 @@ public class ThresholdVerifier {
       System.out.println("Verifying thresholds...");
 
       if (Objects.nonNull(lowerThreshold) && (lowerThreshold > value)) {
-          notificationService.createNotification(device, measurement, true);
-          notificationHandler.sendMessage(
-                  device.getUser(), String.format(
-                          measurement.getMeasurementDetails().getLowerThresholdMessageTemplate(),
-                          lowerThreshold,
-                          value
-                  )
-          );
+          CompletableFuture.runAsync(() -> {
+              notificationService.createNotification(device, measurement, true);
+          }).thenRunAsync(() -> {
+              ExecutorsPool.executorService.submit(() -> {
+                  try {
+                      notificationHandler.sendMessage(
+                              device.getUser(),
+                              String.format(
+                                      measurement.getMeasurementDetails().getLowerThresholdMessageTemplate(),
+                                      lowerThreshold,
+                                      value
+                              )
+                      );
+                  } catch (Exception e) {
+                      System.err.println("Error sending message: " + e.getMessage());
+                  }
+              });
+          });
       }
 
       if (Objects.nonNull(upperThreshold) && (upperThreshold < value)) {
-          notificationService.createNotification(device, measurement, false);
-          notificationHandler.sendMessage(
-                  device.getUser(), String.format(
-                          measurement.getMeasurementDetails().getUpperThresholdMessageTemplate(),
-                          upperThreshold,
-                          value
-                  )
-          );
+          CompletableFuture.runAsync(() -> {
+              notificationService.createNotification(device, measurement, false);
+          }).thenRunAsync(() -> {
+              ExecutorsPool.executorService.submit(() -> {
+                  try {
+                      notificationHandler.sendMessage(
+                              device.getUser(),
+                              String.format(
+                                      measurement.getMeasurementDetails().getUpperThresholdMessageTemplate(),
+                                      upperThreshold,
+                                      value
+                              )
+                      );
+                  } catch (Exception e) {
+                      System.err.println("Error sending message: " + e.getMessage());
+                  }
+              });
+          });
       }
   }
 }

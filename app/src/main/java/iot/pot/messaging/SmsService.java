@@ -4,9 +4,11 @@ import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import iot.pot.database.model.User;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
+@Primary
 @Service
 public class SmsService implements MeasurementNotificationHandler {
     private final String ACCOUNT_SID;

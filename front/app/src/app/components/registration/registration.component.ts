@@ -3,7 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UserRequest } from '../../model/dto/UserRequest';
 import { UserService } from '../../services/user/user.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-registration',
@@ -24,7 +24,7 @@ export class RegistrationComponent implements OnInit {
     password: '',
   };
 
-  constructor(private userService: UserService, private route: ActivatedRoute) { }
+  constructor(private userService: UserService, private route: ActivatedRoute, private router: Router) { }
 
   ngOnInit(): void {
     const user: string | null = this.route.snapshot.paramMap.get('userMac');
@@ -39,6 +39,9 @@ export class RegistrationComponent implements OnInit {
   }
 
   onSubmit(): void {
-    this.userService.createUser(this.user, '62:6A:BA:4D:DC:88', '62:6A:BA:4D:DC:81');
+    this.userService.createUser(this.user, this.userMac, this.deviceMac)
+      .then(() => {
+        this.router.navigate(['/login']);
+      })
   }
 }

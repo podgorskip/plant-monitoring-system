@@ -30,6 +30,7 @@ CREATE TABLE device (
     soil_humidity_frequency integer not null default 10,
     temperature_frequency integer not null default 10,
     insolation_frequency integer not null default 10,
+    insolation_digital_frequency integer not null default 10,
     creation_date TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -88,4 +89,11 @@ CREATE TABLE water_request (
     date TIMESTAMP NOT NULL DEFAULT now()
 );
 
-DROP TABLE IF EXISTS measurement_info;
+DROP TABLE IF EXISTS insolation_digital;
+
+CREATE TABLE insolation_digital (
+    id BIGINT PRIMARY KEY,
+    value NUMERIC(5, 2) NOT NULL,
+    device_id BIGINT NOT NULL REFERENCES device(id),
+    date TIMESTAMP NOT NULL DEFAULT NOW()
+)

@@ -9,6 +9,8 @@
 #define NVS_HUMIDITY_NAMESPACE "air_humidity_buf"
 #define NVS_SOIL_HUMIDITY_NAMESPACE "soil_humidity_buf"
 #define NVS_INSOLATION_NAMESPACE "insolation_buff"
+#define NVS_INSOLATION_DIGITAL_NAMESPACE "insolation_digital_buff"
+
 
 #define MAX_MESSAGES 10
 #define NVS "NVS"
@@ -29,6 +31,8 @@ const char* get_namespace_name(enum Parameter param) {
             return NVS_SOIL_HUMIDITY_NAMESPACE;
         case INSOLATION:
             return NVS_INSOLATION_NAMESPACE;
+        case INSOLATION_DIGITAL:
+            return NVS_INSOLATION_DIGITAL_NAMESPACE;
         default:
             ESP_LOGE("NVS", "Invalid parameter provided");
             return NULL; 

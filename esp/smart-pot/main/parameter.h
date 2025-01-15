@@ -5,7 +5,8 @@ enum Parameter {
     TEMPERATURE,
     HUMIDITY,
     SOIL_HUMIDITY,
-    INSOLATION
+    INSOLATION,
+    INSOLATION_DIGITAL
 };
 
 #endif 

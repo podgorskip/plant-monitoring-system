@@ -67,6 +67,9 @@ public class Device {
     @Column(name = "insolation_frequency")
     private Integer insolationFrequency;
 
+    @Column(name = "insolation_digital_frequency")
+    private Integer insolationDigitalFrequency;
+
     @Column(name = "creation_date", nullable = false)
     @Builder.Default
     private LocalDateTime creationDate = LocalDateTime.now();

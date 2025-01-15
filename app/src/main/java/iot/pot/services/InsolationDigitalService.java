@@ -2,9 +2,9 @@ package iot.pot.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import iot.pot.database.model.AirHumidity;
 import iot.pot.database.model.Device;
-import iot.pot.database.repositories.AirHumidityRepository;
+import iot.pot.database.model.InsolationDigital;
+import iot.pot.database.repositories.InsolationDigitalRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.utils.ExecutorsPool;
@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class AirHumidityService implements MeasurementInterface {
-    private final AirHumidityRepository airHumidityRepository;
+public class InsolationDigitalService implements MeasurementInterface {
+    private final InsolationDigitalRepository insolationDigitalRepository;
     private final ThresholdVerifier thresholdVerifier;
     private final ObjectMapper objectMapper;
 
@@ -27,18 +27,17 @@ public class AirHumidityService implements MeasurementInterface {
 
         try {
             System.out.println(messageString);
-            AirHumidity airHumidity = objectMapper.readValue(messageString, AirHumidity.class);
-            airHumidity.setDevice(device);
-            airHumidityRepository.save(airHumidity);
+            InsolationDigital insolationDigital = objectMapper.readValue(messageString, InsolationDigital.class);
+            insolationDigital.setDevice(device);
+            insolationDigitalRepository.save(insolationDigital);
 
             ExecutorsPool.executorService.submit(() -> {
                 thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.AIR_HUMIDITY,
-                        device.getAirHumidityLowerThreshold(),
-                        device.getAirHumidityUpperThreshold(),
-                        airHumidity.getValue(),
-                        device
-                );
+                        MeasurementEnum.INSOLATION_DIGITAL,
+                        device.getInsolationLowerThreshold(),
+                        device.getInsolationUpperThreshold(),
+                        insolationDigital.getValue(),
+                        device);
             });
 
         } catch (JsonProcessingException e) {
@@ -48,7 +47,7 @@ public class AirHumidityService implements MeasurementInterface {
         }
     }
 
-    public Page<AirHumidity> getByDevice(Device device, Pageable pageable) {
-        return airHumidityRepository.findByDevice(device, pageable);
+    public Page<InsolationDigital> getByDevice(Device device, Pageable pageable) {
+        return insolationDigitalRepository.findByDevice(device, pageable);
     }
 }
