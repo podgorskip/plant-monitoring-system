@@ -82,21 +82,6 @@ public class MqttConnector implements MqttCallback {
         handleData(topic, message);
     }
 
-    void handleData(String topic,  MqttMessage message) {
-        executorService.submit(() -> {
-            subscribeParams.stream()
-                    .filter(param -> {
-                        String measurement = topic.substring(topic.lastIndexOf("/") + 1);
-                        return param.getMeasurementEnum().getMeasurementDetails().getTopic().equals(measurement);
-                    })
-                    .findFirst()
-                    .ifPresent(param -> {
-                        System.out.println(param);
-                        param.getDataHandler().save(message.getPayload(), device);
-                    });
-        });
-    }
-
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
         System.out.println("Message delivery complete for message ID: " + token.getMessageId());
@@ -130,5 +115,20 @@ public class MqttConnector implements MqttCallback {
         } catch (MqttException e) {
             throw new BrokerException("Broker exception: " + e.getMessage());
         }
+    }
+
+    private void handleData(String topic,  MqttMessage message) {
+        executorService.submit(() -> {
+            subscribeParams.stream()
+                    .filter(param -> {
+                        String measurement = topic.substring(topic.lastIndexOf("/") + 1);
+                        return param.getMeasurementEnum().getMeasurementDetails().getTopic().equals(measurement);
+                    })
+                    .findFirst()
+                    .ifPresent(param -> {
+                        System.out.println(param);
+                        param.getDataHandler().save(message.getPayload(), device);
+                    });
+        });
     }
 }

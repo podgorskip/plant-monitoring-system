@@ -24,6 +24,7 @@ public class DeviceService implements CommandLineRunner {
     private final TemperatureService temperatureService;
     private final SoilHumidityService soilHumidityService;
     private final InsolationService insolationService;
+    private final InsolationDigitalService insolationDigitalService;
 
     private final EnumMap<MeasurementEnum, BiFunction<Device, Pageable, Page<? extends Measurement>>> measurementFetchers = new EnumMap<>(MeasurementEnum.class);
 
@@ -33,7 +34,8 @@ public class DeviceService implements CommandLineRunner {
             AirHumidityService airHumidityService,
             TemperatureService temperatureService,
             SoilHumidityService soilHumidityService,
-            InsolationService insolationService
+            InsolationService insolationService,
+            InsolationDigitalService insolationDigitalService
     ) {
         this.deviceRepository = deviceRepository;
         this.mqttConnector = mqttConnector;
@@ -41,11 +43,13 @@ public class DeviceService implements CommandLineRunner {
         this.temperatureService = temperatureService;
         this.soilHumidityService = soilHumidityService;
         this.insolationService = insolationService;
+        this.insolationDigitalService = insolationDigitalService;
 
         measurementFetchers.put(MeasurementEnum.TEMPERATURE, temperatureService::getByDevice);
         measurementFetchers.put(MeasurementEnum.AIR_HUMIDITY, airHumidityService::getByDevice);
         measurementFetchers.put(MeasurementEnum.SOIL_HUMIDITY, soilHumidityService::getByDevice);
         measurementFetchers.put(MeasurementEnum.INSOLATION, insolationService::getByDevice);
+        measurementFetchers.put(MeasurementEnum.INSOLATION_DIGITAL, insolationDigitalService::getByDevice);
     }
 
     public void assignDevice(User user, String mac) {
@@ -104,6 +108,7 @@ public class DeviceService implements CommandLineRunner {
                     device.getInsolationLowerThreshold(),
                     device.getInsolationUpperThreshold()
             );
+            default -> throw new DeviceException(DeviceException.ExceptionType.MEASUREMENT_NOT_FOUND);
         };
     }
 
@@ -115,6 +120,7 @@ public class DeviceService implements CommandLineRunner {
             case AIR_HUMIDITY -> new FrequencyResponse(device.getAirHumidityFrequency());
             case SOIL_HUMIDITY -> new FrequencyResponse(device.getSoilHumidityFrequency());
             case INSOLATION -> new FrequencyResponse(device.getInsolationFrequency());
+            case INSOLATION_DIGITAL -> new FrequencyResponse(device.getInsolationDigitalFrequency());
         };
     }
 
@@ -129,6 +135,7 @@ public class DeviceService implements CommandLineRunner {
             case AIR_HUMIDITY -> device.setAirHumidityFrequency(frequency);
             case SOIL_HUMIDITY -> device.setSoilHumidityFrequency(frequency);
             case INSOLATION -> device.setInsolationFrequency(frequency);
+            case INSOLATION_DIGITAL -> device.setInsolationDigitalFrequency(frequency);
         }
     }
 
@@ -137,7 +144,8 @@ public class DeviceService implements CommandLineRunner {
                 new SubscribeParam(MeasurementEnum.AIR_HUMIDITY, airHumidityService),
                 new SubscribeParam(MeasurementEnum.TEMPERATURE, temperatureService),
                 new SubscribeParam(MeasurementEnum.SOIL_HUMIDITY, soilHumidityService),
-                new SubscribeParam(MeasurementEnum.INSOLATION, insolationService)
+                new SubscribeParam(MeasurementEnum.INSOLATION, insolationService),
+                new SubscribeParam(MeasurementEnum.INSOLATION_DIGITAL, insolationDigitalService)
         ));
     }
 

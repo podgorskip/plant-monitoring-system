@@ -25,6 +25,11 @@ public enum MeasurementEnum {
             "insolation",
             "Uh-oh! Insolation has dropped below threshold [%d allowed, %s current]. Is it cloudy out there?",
             "Wow! Insolation has raised above threshold [%d allowed, %s current]. Don't forget your sunscreen!"
+    )),
+    INSOLATION_DIGITAL(new MeasurementDetails(
+            "insolation_digital",
+            "Oops! The digital insolation is acting up. Did you forget to charge the sun? [%d allowed, %s current].",
+            "Whoa! Insolation levels are through the roof! Is the sun showing off again? [%d allowed, %s current]."
     ));
 
     private final MeasurementDetails measurementDetails;

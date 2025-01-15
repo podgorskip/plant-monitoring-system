@@ -1,6 +1,11 @@
 <div class="device">
-    <p><strong>Device info:</strong> {{device.info}}</p>
-    <p><strong>Device number:</strong> {{device.deviceNumber}}</p>
+    <div class="info">
+      <div>
+        <p><strong>Device info:</strong> {{device.info}}</p>
+        <p><strong>Device number:</strong> {{device.deviceNumber}}</p>
+      </div>
+      <img src={{iconPath}}>
+    </div>
 
     <div class="watering">
         <h4>Watering</h4>
@@ -23,7 +28,7 @@
         <h4>Measurements</h4>
         <div class="tabs">
           <button
-            *ngFor="let m of measurementEnumKeys"
+            *ngFor="let m of measurementEnumKeysFiltered"
             (click)="fetchMeasurements(m)"
             [class.active]="m === selectedMeasurementTab"
           >
@@ -80,7 +85,7 @@
         <div>
             <label for="measurement">Measurement:</label>
             <select id="measurement" [(ngModel)]="selectedMeasurement" name="measurement">
-            <option *ngFor="let m of measurementEnumKeys" [value]="m">{{m}}</option>
+            <option *ngFor="let m of measurementEnumKeysFiltered" [value]="m">{{m}}</option>
             </select>
         </div>
   

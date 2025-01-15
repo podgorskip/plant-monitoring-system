@@ -20,6 +20,9 @@ export class DeviceComponent implements OnInit {
   thresholds: { measurement: MeasurementEnum; threshold: Threshold }[] = [];
   frequencies: { measurement: MeasurementEnum; frequency: Frequency }[] = []; 
   measurementEnumKeys = Object.keys(MeasurementEnum);
+  measurementEnumKeysFiltered = Object.keys(MeasurementEnum).filter(
+    (key) => key !== 'INSOLATION_DIGITAL'
+  );
   selectedMeasurement?: MeasurementEnum;
   thresholdMin?: number;
   thresholdMax?: number;
@@ -27,17 +30,30 @@ export class DeviceComponent implements OnInit {
   frequencyValue?: number;
   selectedMeasurementTab!: string;
   paginatedMeasurements: { date: string; value: number }[] = [];
+  iconPath?: string;
   currentPage = 0;
 
   constructor(private deviceService: DeviceService) {}
 
   ngOnInit(): void {
     this.loadThresholds();
+    this.deviceService.getDeviceMeasurements(this.device.id, 'INSOLATION_DIGITAL').subscribe({
+      next: (data: { content: { date: string; value: number }[] }) => {
+        if (data.content && data.content.length > 0) {
+          this.iconPath = data.content[0].value === 0 ? 'assets/sun.png' : 'assets/moon.png'; 
+        } else {
+          console.log('No content available.');
+        }
+      },
+      error: (err) => {
+        console.error(`Failed to fetch device measurements: ${err}`);
+      }
+    });
   }
 
   private loadThresholds(): void {
     this.thresholds = [];
-    this.measurementEnumKeys.forEach((key) => {
+    this.measurementEnumKeysFiltered.forEach((key) => {
       const measurementKey = key as keyof typeof MeasurementEnum;
       this.deviceService.getDeviceThreshold(this.device.id, measurementKey).subscribe({
         next: (threshold_value) => {
