@@ -19,7 +19,8 @@ void light_sensor_init(void) {
 }
 
 bool light_sensor_get_digital_state(void) {
-    return gpio_get_level(LIGHT_SENSOR_DIGITAL_PIN);
+    // return gpio_get_level(LIGHT_SENSOR_DIGITAL_PIN);
+    return 1;
 }
 
 const char* light_sensor_get_digital_condition(void) {
@@ -33,6 +34,8 @@ int light_sensor_read_analog(void) {
 
 float light_sensor_get_brightness_percentage(void) {
     int raw_value = light_sensor_read_analog();
-    float brightness_percentage = (1.0f - ((float)raw_value / 4095.0f)) * 100.0f;
+    // float brightness_percentage = (1.0f - ((float)raw_value / 4095.0f)) * 100.0f;
+    // TODO: add dummy data for brightness percentage
+    float brightness_percentage = 80.0f;
     return brightness_percentage;
 }

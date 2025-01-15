@@ -152,40 +152,44 @@ esp_err_t bme280_read_chip_id(BME280 *dev, uint8_t *chip_id) {
 }
 
 esp_err_t bme280_read_temp(BME280 *dev, float *temperature) {
-    if (dev == NULL || temperature == NULL) {
-        printf("[ERROR] Invalid arguments to bme280_read_temperature\n");
-        return ESP_ERR_INVALID_ARG;
-    }
+    // if (dev == NULL || temperature == NULL) {
+    //     printf("[ERROR] Invalid arguments to bme280_read_temperature\n");
+    //     return ESP_ERR_INVALID_ARG;
+    // }
 
     uint8_t data[8]; // Odczyt pełnych 8 bajtów danych
-    if (i2c_read(dev->i2c_addr, BME280_REG_PRESS_MSB, data, 8) != 0) {
-        printf("[ERROR] Failed to read full sensor data\n");
-        return ESP_FAIL;
-    }
+    // if (i2c_read(dev->i2c_addr, BME280_REG_PRESS_MSB, data, 8) != 0) {
+    //     printf("[ERROR] Failed to read full sensor data\n");
+    //     return ESP_FAIL;
+    // }
 
-    int32_t raw_temp = (int32_t)((data[3] << 12) | (data[4] << 4) | (data[5] >> 4));
-    *temperature = bme280_compensate_temp(dev, raw_temp);
-    bme280_compensate_hum(dev, (int32_t)((data[6] << 8) | data[7]));
-    bme280_compensate_press(dev, (int32_t)((data[0] << 12) | (data[1] << 4) | (data[2] >> 4)));
+    // int32_t raw_temp = (int32_t)((data[3] << 12) | (data[4] << 4) | (data[5] >> 4));
+    // *temperature = bme280_compensate_temp(dev, raw_temp);
+    // TODO: add dummy data for temperature
+    *temperature = 25.0f;
+    // bme280_compensate_hum(dev, (int32_t)((data[6] << 8) | data[7]));
+    // bme280_compensate_press(dev, (int32_t)((data[0] << 12) | (data[1] << 4) | (data[2] >> 4)));
     return ESP_OK;
 }
 
 esp_err_t bme280_read_humidity(BME280 *dev, float *humidity) {
-    if (dev == NULL || humidity == NULL) {
-        printf("[ERROR] Invalid arguments to bme280_read_humidity\n");
-        return ESP_ERR_INVALID_ARG;
-    }
+    // if (dev == NULL || humidity == NULL) {
+    //     printf("[ERROR] Invalid arguments to bme280_read_humidity\n");
+    //     return ESP_ERR_INVALID_ARG;
+    // }
 
     uint8_t data[8]; // Odczyt pełnych 8 bajtów danych
-    if (i2c_read(dev->i2c_addr, BME280_REG_PRESS_MSB, data, 8) != 0) {
-        printf("[ERROR] Failed to read full sensor data\n");
-        return ESP_FAIL;
-    }
+    // if (i2c_read(dev->i2c_addr, BME280_REG_PRESS_MSB, data, 8) != 0) {
+    //     printf("[ERROR] Failed to read full sensor data\n");
+    //     return ESP_FAIL;
+    // }
 
-    int32_t raw_hum = (int32_t)((data[6] << 8) | data[7]);
-    bme280_compensate_temp(dev, (int32_t)((data[3] << 12) | (data[4] << 4) | (data[5] >> 4)));
-    *humidity = bme280_compensate_hum(dev, raw_hum);
-    bme280_compensate_press(dev, (int32_t)((data[0] << 12) | (data[1] << 4) | (data[2] >> 4)));
+    // int32_t raw_hum = (int32_t)((data[6] << 8) | data[7]);
+    // bme280_compensate_temp(dev, (int32_t)((data[3] << 12) | (data[4] << 4) | (data[5] >> 4)));
+    // *humidity = bme280_compensate_hum(dev, raw_hum);
+    //TODO: add dummy data for humidity
+    *humidity = 50.0f;
+    // bme280_compensate_press(dev, (int32_t)((data[0] << 12) | (data[1] << 4) | (data[2] >> 4)));
     return ESP_OK;
 }
 

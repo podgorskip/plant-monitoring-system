@@ -12,7 +12,9 @@ void water_sensor_init(void) {
 }
 
 int water_sensor_read(void) {
-    int raw_value = adc1_get_raw(WATER_SENSOR_ADC_CHANNEL);
+    // int raw_value = adc1_get_raw(WATER_SENSOR_ADC_CHANNEL);
+    // TODO: add dummy data for water sensor
+    int raw_value = 200;
     return raw_value;
 }
 

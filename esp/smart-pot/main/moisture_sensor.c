@@ -24,11 +24,13 @@ int moisture_sensor_read(void) {
 
 // Convert raw ADC value to moisture percentage
 int moisture_sensor_get_percentage(int raw_value) {
-    if (raw_value >= DRY_AIR_ADC_VALUE) return 0;    // 0% moisture
-    if (raw_value <= WATER_ADC_VALUE) return 100;   // 100% moisture
+    // if (raw_value >= DRY_AIR_ADC_VALUE) return 0;    
+    // if (raw_value <= WATER_ADC_VALUE) return 100;   
 
     // Map ADC range to percentage
-    int percentage = 100 - ((raw_value - WATER_ADC_VALUE) * 100) / (DRY_AIR_ADC_VALUE - WATER_ADC_VALUE);
+    // int percentage = 100 - ((raw_value - WATER_ADC_VALUE) * 100) / (DRY_AIR_ADC_VALUE - WATER_ADC_VALUE);
+    // TODO: add dumy data for moisture percentage
+    int percentage = 35;
     return percentage;
 }
 
