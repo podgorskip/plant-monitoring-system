@@ -86,7 +86,7 @@
         <div>
             <label for="measurement">Measurement:</label>
             <select id="measurement" [(ngModel)]="selectedMeasurement" name="measurement">
-              <option *ngFor="let m of measurementEnumKeys" [value]="m">{{getEnumValue(m)}}</option>
+              <option *ngFor="let m of measurementEnumKeysFiltered" [value]="m">{{getEnumValue(m)}}</option>
             </select>
         </div>
   
