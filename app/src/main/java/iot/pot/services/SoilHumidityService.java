@@ -11,6 +11,7 @@ import iot.pot.exceptions.DeviceException;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.mqtt.MqttConnector;
+import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,17 +39,17 @@ public class SoilHumidityService implements MeasurementInterface {
             System.out.println(messageString);
             SoilHumidity soilHumidity = objectMapper.readValue(messageString, SoilHumidity.class);
             soilHumidity.setDevice(device);
-
             soilHumidityRepository.save(soilHumidity);
 
-            thresholdVerifier.verifyThreshold(
-                    MeasurementEnum.SOIL_HUMIDITY,
-                    device.getSoilHumidityLowerThreshold(),
-                    device.getSoilHumidityUpperThreshold(),
-                    soilHumidity.getValue(),
-                    device
-            );
-
+            ExecutorsPool.executorService.submit(() -> {
+                thresholdVerifier.verifyThreshold(
+                        MeasurementEnum.SOIL_HUMIDITY,
+                        device.getSoilHumidityLowerThreshold(),
+                        device.getSoilHumidityUpperThreshold(),
+                        soilHumidity.getValue(),
+                        device
+                );
+            });
 
             if (Objects.nonNull(device.getSoilHumidityLowerThreshold()) && soilHumidity.getValue() < device.getSoilHumidityLowerThreshold()) {
                 sendWaterRequest(device, 30);

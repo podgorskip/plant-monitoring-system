@@ -7,6 +7,7 @@ import iot.pot.database.model.InsolationDigital;
 import iot.pot.database.repositories.InsolationDigitalRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
+import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,16 +29,16 @@ public class InsolationDigitalService implements MeasurementInterface {
             System.out.println(messageString);
             InsolationDigital insolationDigital = objectMapper.readValue(messageString, InsolationDigital.class);
             insolationDigital.setDevice(device);
-
-            thresholdVerifier.verifyThreshold(
-                    MeasurementEnum.AIR_HUMIDITY,
-                    device.getAirHumidityLowerThreshold(),
-                    device.getAirHumidityUpperThreshold(),
-                    insolationDigital.getValue(),
-                    device
-            );
-
             insolationDigitalRepository.save(insolationDigital);
+
+            ExecutorsPool.executorService.submit(() -> {
+                thresholdVerifier.verifyThreshold(
+                        MeasurementEnum.INSOLATION_DIGITAL,
+                        device.getInsolationLowerThreshold(),
+                        device.getInsolationUpperThreshold(),
+                        insolationDigital.getValue(),
+                        device);
+            });
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();
