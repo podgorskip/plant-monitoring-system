@@ -183,7 +183,7 @@ static void publish_temperature(void *pvParameters)
             save_message_to_nvs(payload, TEMPERATURE);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(temperature_delay * 10 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(temperature_delay * 60 * 1000));  
     }
 }
 
@@ -222,7 +222,7 @@ static void publish_humidity(void *pvParameters)
             save_message_to_nvs(payload, HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay * 10 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(air_humidity_delay * 60 * 1000));  
     }
 }
 
@@ -261,7 +261,7 @@ static void publish_soil_humidity(void *pvParameters)
             save_message_to_nvs(payload, SOIL_HUMIDITY);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay * 10 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(soil_humidity_delay * 60 * 1000));  
     }
 }
 
@@ -300,7 +300,7 @@ static void publish_insolation(void *pvParameters)
             save_message_to_nvs(payload, INSOLATION);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(insolation_delay * 10 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(insolation_delay * 60 * 1000));  
     }
 }
 
@@ -339,7 +339,7 @@ static void publish_insolation_digital(void *pvParameters)
             save_message_to_nvs(payload, INSOLATION_DIGITAL);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(insolation_digital_delay * 10 * 1000));  
+        vTaskDelay(pdMS_TO_TICKS(insolation_digital_delay * 60 * 1000));  
     }
 }
 
