@@ -31,14 +31,13 @@ public class InsolationDigitalService implements MeasurementInterface {
             insolationDigital.setDevice(device);
             insolationDigitalRepository.save(insolationDigital);
 
-            ExecutorsPool.executorService.submit(() -> {
-                thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.INSOLATION_DIGITAL,
-                        device.getInsolationLowerThreshold(),
-                        device.getInsolationUpperThreshold(),
-                        insolationDigital.getValue(),
-                        device);
-            });
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.INSOLATION_DIGITAL,
+                    device.getInsolationLowerThreshold(),
+                    device.getInsolationUpperThreshold(),
+                    insolationDigital.getValue(),
+                    device
+            );
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();

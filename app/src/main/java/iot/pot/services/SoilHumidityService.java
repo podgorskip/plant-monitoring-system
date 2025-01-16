@@ -4,21 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import iot.pot.database.model.Device;
 import iot.pot.database.model.SoilHumidity;
-import iot.pot.database.model.Temperature;
 import iot.pot.database.repositories.DeviceRepository;
 import iot.pot.database.repositories.SoilHumidityRepository;
 import iot.pot.exceptions.DeviceException;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
 import iot.pot.mqtt.MqttConnector;
-import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 @Service
@@ -41,15 +37,13 @@ public class SoilHumidityService implements MeasurementInterface {
             soilHumidity.setDevice(device);
             soilHumidityRepository.save(soilHumidity);
 
-            ExecutorsPool.executorService.submit(() -> {
-                thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.SOIL_HUMIDITY,
-                        device.getSoilHumidityLowerThreshold(),
-                        device.getSoilHumidityUpperThreshold(),
-                        soilHumidity.getValue(),
-                        device
-                );
-            });
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.SOIL_HUMIDITY,
+                    device.getSoilHumidityLowerThreshold(),
+                    device.getSoilHumidityUpperThreshold(),
+                    soilHumidity.getValue(),
+                    device
+            );
 
             if (Objects.nonNull(device.getSoilHumidityLowerThreshold()) && soilHumidity.getValue() < device.getSoilHumidityLowerThreshold()) {
                 sendWaterRequest(device, 30);

@@ -7,7 +7,6 @@ import iot.pot.database.model.Temperature;
 import iot.pot.database.repositories.TemperatureRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
-import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,15 +30,13 @@ public class TemperatureService implements MeasurementInterface {
             temperature.setDevice(device);
             temperatureRepository.save(temperature);
 
-            ExecutorsPool.executorService.submit(() -> {
-                thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.TEMPERATURE,
-                        device.getTemperatureLowerThreshold(),
-                        device.getTemperatureUpperThreshold(),
-                        temperature.getValue(),
-                        device
-                );
-            });
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.TEMPERATURE,
+                    device.getTemperatureLowerThreshold(),
+                    device.getTemperatureUpperThreshold(),
+                    temperature.getValue(),
+                    device
+            );
 
         } catch (JsonProcessingException e) {
             System.out.println(e);

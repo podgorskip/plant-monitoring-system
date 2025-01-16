@@ -7,7 +7,6 @@ import iot.pot.database.model.Insolation;
 import iot.pot.database.repositories.InsolationRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
-import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,15 +30,13 @@ public class InsolationService implements MeasurementInterface {
             insolation.setDevice(device);
             insolationRepository.save(insolation);
 
-            ExecutorsPool.executorService.submit(() -> {
-                thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.INSOLATION,
-                        device.getInsolationLowerThreshold(),
-                        device.getInsolationUpperThreshold(),
-                        insolation.getValue(),
-                        device
-                );
-            });
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.INSOLATION,
+                    device.getInsolationLowerThreshold(),
+                    device.getInsolationUpperThreshold(),
+                    insolation.getValue(),
+                    device
+            );
 
         } catch (JsonProcessingException e) {
             System.out.println(e);

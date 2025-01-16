@@ -7,7 +7,6 @@ import iot.pot.database.model.Device;
 import iot.pot.database.repositories.AirHumidityRepository;
 import iot.pot.model.MeasurementInterface;
 import iot.pot.model.enums.MeasurementEnum;
-import iot.pot.utils.ExecutorsPool;
 import iot.pot.validation.ThresholdVerifier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,15 +30,13 @@ public class AirHumidityService implements MeasurementInterface {
             airHumidity.setDevice(device);
             airHumidityRepository.save(airHumidity);
 
-            ExecutorsPool.executorService.submit(() -> {
-                thresholdVerifier.verifyThreshold(
-                        MeasurementEnum.AIR_HUMIDITY,
-                        device.getAirHumidityLowerThreshold(),
-                        device.getAirHumidityUpperThreshold(),
-                        airHumidity.getValue(),
-                        device
-                );
-            });
+            thresholdVerifier.verifyThreshold(
+                    MeasurementEnum.AIR_HUMIDITY,
+                    device.getAirHumidityLowerThreshold(),
+                    device.getAirHumidityUpperThreshold(),
+                    airHumidity.getValue(),
+                    device
+            );
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException();
