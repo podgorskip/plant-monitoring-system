@@ -25,11 +25,11 @@
 
 #define WATER_REQUEST_TOPIC "%s/%s/soil_humidity/request"
 
-volatile int air_humidity_delay = 1;
-volatile int soil_humidity_delay = 1;
-volatile int temperature_delay = 1;
-volatile int insolation_delay = 1;
-volatile int insolation_digital_delay = 1;
+volatile int air_humidity_delay = 5;
+volatile int soil_humidity_delay = 5;
+volatile int temperature_delay = 5;
+volatile int insolation_delay = 5;
+volatile int insolation_digital_delay = 5;
 
 volatile bool pump_state = false; // Current pump state
 
@@ -432,7 +432,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             if (strcmp(topic, expected_topic) == 0) {
                 ESP_LOGI(MQTT, "Handling water request: %s", message);
                 int watering_time_sec = atoi(message); 
-                if (watering_time_sec > 0 && water_level > 20) {
+                if (water_level <= 20) {
+                    ESP_LOGW(MQTT, "Invalid watering time received: %s", message);
+                    return;
+                }
+                
+                if (watering_time_sec > 0) {
                     ESP_LOGI(MQTT, "Watering for %d seconds.", watering_time_sec);
                     pump_on();
                     pump_state = true;  
