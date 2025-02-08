@@ -25,6 +25,7 @@ public class DeviceService implements CommandLineRunner {
     private final SoilHumidityService soilHumidityService;
     private final InsolationService insolationService;
     private final InsolationDigitalService insolationDigitalService;
+    private final WaterLevelService waterLevelService;
 
     private final EnumMap<MeasurementEnum, BiFunction<Device, Pageable, Page<? extends Measurement>>> measurementFetchers = new EnumMap<>(MeasurementEnum.class);
 
@@ -35,7 +36,8 @@ public class DeviceService implements CommandLineRunner {
             TemperatureService temperatureService,
             SoilHumidityService soilHumidityService,
             InsolationService insolationService,
-            InsolationDigitalService insolationDigitalService
+            InsolationDigitalService insolationDigitalService,
+            WaterLevelService waterLevelService
     ) {
         this.deviceRepository = deviceRepository;
         this.mqttConnector = mqttConnector;
@@ -44,6 +46,7 @@ public class DeviceService implements CommandLineRunner {
         this.soilHumidityService = soilHumidityService;
         this.insolationService = insolationService;
         this.insolationDigitalService = insolationDigitalService;
+        this.waterLevelService = waterLevelService;
 
         measurementFetchers.put(MeasurementEnum.TEMPERATURE, temperatureService::getByDevice);
         measurementFetchers.put(MeasurementEnum.AIR_HUMIDITY, airHumidityService::getByDevice);
@@ -121,6 +124,7 @@ public class DeviceService implements CommandLineRunner {
             case SOIL_HUMIDITY -> new FrequencyResponse(device.getSoilHumidityFrequency());
             case INSOLATION -> new FrequencyResponse(device.getInsolationFrequency());
             case INSOLATION_DIGITAL -> new FrequencyResponse(device.getInsolationDigitalFrequency());
+            default -> throw new DeviceException(DeviceException.ExceptionType.MEASUREMENT_NOT_FOUND);
         };
     }
 
@@ -145,7 +149,8 @@ public class DeviceService implements CommandLineRunner {
                 new SubscribeParam(MeasurementEnum.TEMPERATURE, temperatureService),
                 new SubscribeParam(MeasurementEnum.SOIL_HUMIDITY, soilHumidityService),
                 new SubscribeParam(MeasurementEnum.INSOLATION, insolationService),
-                new SubscribeParam(MeasurementEnum.INSOLATION_DIGITAL, insolationDigitalService)
+                new SubscribeParam(MeasurementEnum.INSOLATION_DIGITAL, insolationDigitalService),
+                new SubscribeParam(MeasurementEnum.WATER_LEVEL, waterLevelService)
         ));
     }
 
@@ -171,7 +176,7 @@ public class DeviceService implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         deviceRepository.findAll().forEach(this::connectMqtt);
     }
 }

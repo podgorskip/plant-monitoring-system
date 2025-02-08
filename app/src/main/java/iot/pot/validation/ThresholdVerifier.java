@@ -61,4 +61,22 @@ public class ThresholdVerifier {
           });
       }
   }
+
+  public void sendWaterAlert(Device device) {
+      CompletableFuture.runAsync(() -> {
+          notificationService.createNotification(device, MeasurementEnum.WATER_LEVEL, true);
+      }).thenRunAsync(() -> {
+          ExecutorsPool.executorService.submit(() -> {
+              try {
+                  notificationHandler.sendMessage(
+                          device.getUser(),
+                          MeasurementEnum.WATER_LEVEL.getMeasurementDetails().getLowerThresholdMessageTemplate()
+                  );
+
+              } catch (Exception e) {
+                  System.err.println("Error sending message: " + e.getMessage());
+              }
+          });
+      });
+  }
 }

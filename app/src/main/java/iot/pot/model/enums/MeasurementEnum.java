@@ -30,6 +30,11 @@ public enum MeasurementEnum {
             "insolation_digital",
             "Oops! The digital insolation is acting up. Did you forget to charge the sun? [%s allowed, %s current].",
             "Whoa! Insolation levels are through the roof! Is the sun showing off again? [%s allowed, %s current]."
+    )),
+    WATER_LEVEL(new MeasurementDetails(
+            "water_alert",
+            "Ups! Cannot water your plant. Fill up!",
+            "Water level is insane"
     ));
 
     private final MeasurementDetails measurementDetails;
