@@ -3,7 +3,7 @@ import { DeviceService } from '../../services/device/device.service';
 import { Device } from '../../model/Device';
 import { Threshold } from '../../model/Threshold';
 import { MeasurementEnum } from './../../model/enums/MeasurementEnum';
-import { NgFor, NgIf } from '@angular/common';
+import { NgFor, NgIf, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Frequency } from '../../model/Frequency';
 
@@ -29,9 +29,10 @@ export class DeviceComponent implements OnInit {
   wateringTime!: number;
   frequencyValue?: number;
   selectedMeasurementTab!: string;
-  paginatedMeasurements: { date: string; value: number }[] = [];
+  paginatedMeasurements: { date: string; value: number, unit: string }[] = [];
   iconPath?: string;
   currentPage = 0;
+  activeTab: string = 'watering'; 
 
   constructor(private deviceService: DeviceService) {}
 
@@ -150,7 +151,11 @@ export class DeviceComponent implements OnInit {
         hour: 'numeric',
         minute: 'numeric',
     });
-}
+  }
+
+  switchTab(tab: string) {
+    this.activeTab = tab;
+  }
 
 
   sendWaterRequest(): void {
@@ -168,12 +173,46 @@ export class DeviceComponent implements OnInit {
   }
 
   getEnumValue(key: string): string | undefined {
-    if (key in MeasurementEnum) {
+    console.log('Checking key:', key);
+
+    const foundKey = Object.keys(MeasurementEnum).find(
+        (enumKey) => MeasurementEnum[enumKey as keyof typeof MeasurementEnum] === key
+    );
+
+    if (foundKey) {
+        return MeasurementEnum[foundKey as keyof typeof MeasurementEnum];
+    } else if (key in MeasurementEnum) {
       return MeasurementEnum[key as keyof typeof MeasurementEnum];
+    } else if (key.toUpperCase() in MeasurementEnum) {
+      return MeasurementEnum[key.toUpperCase() as keyof typeof MeasurementEnum];
     }
-    return undefined; 
+
+    return undefined;
   }
   
+  getEnumImage(key: string): string {
+    switch (key) {
+      case "TEMPERATURE":
+      case "Temperature":
+        return "assets/thermometer.png";
+  
+      case "SOIL_HUMIDITY":
+      case "Soil moisture":
+        return "assets/soil.png";
+  
+      case "AIR_HUMIDITY":
+      case "Air humidity":
+        return "assets/humidity.png";
+  
+      case "INSOLATION":
+      case "Light exposure": 
+        return "assets/insolation.png";
+  
+      default:
+        console.log('default: ', key);
+        return "default.png";
+    }
+  }  
 
   fetchMeasurements(measurement: string, page: number = 0): void {
     this.selectedMeasurementTab = measurement;
@@ -186,6 +225,21 @@ export class DeviceComponent implements OnInit {
       error: (err) =>
         console.error(`Failed to fetch measurements for ${measurement}:`, err),
     });
+  }
+
+  capitalize(value: string): string {
+    if (!value) return '';
+    return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+  }
+
+  thresholdUnit(value: string): string {
+    switch(value) {
+      case "Temperature": return "C";
+      case "Soil moisture":
+      case "Air humidity": 
+      case "Light exposure": return "%";
+      default: return "";
+    }
   }
 
   private resetForm(): void {

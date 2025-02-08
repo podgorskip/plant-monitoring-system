@@ -17,11 +17,7 @@ option {
 button {
     background-color: green;
     color: white;
-    border-radius: 5px;
-    border: 1px solid green;   
+    border-radius: 10px;
     padding: 4px 10px;
-}
-
-button:hover {
-    background-color: rgb(28, 142, 28);
+    border: 1px solid green;
 }

@@ -1,107 +1,96 @@
 <div class="device">
+  <div class="side-bar">
     <div class="info">
-      <div>
+      <div class="details">
         <p><strong>Device info:</strong> {{device.info}}</p>
         <p><strong>Device number:</strong> {{device.deviceNumber}}</p>
       </div>
-      <img src={{iconPath}}>
     </div>
+    <div class="navigation">
+      <div (click)="switchTab('watering')" [class.active]="activeTab === 'watering'">
+        <img src="assets/drop.png"/>
+        <p>Watering</p>
+      </div>
+      <div (click)="switchTab('measurements')" [class.active]="activeTab === 'measurements'">
+        <img src="assets/database.png"/>
+        <p>Measurements</p>
+      </div>
+      <div (click)="switchTab('thresholds')" [class.active]="activeTab === 'thresholds'">
+        <img src="assets/threshold.png"/>
+        <p>Thresholds</p>
+      </div>
+      <div (click)="switchTab('frequency')" [class.active]="activeTab === 'frequency'">
+        <img src="assets/clock.png"/>
+        <p>Frequency</p>
+      </div>
+    </div>
+  </div>
 
-    <div class="watering">
+  <div class="tab-navigation">
+    <div class="tab-content">
+      <div class="tab-pane" [class.active]="activeTab === 'watering'" *ngIf="activeTab === 'watering'">
         <h4>Watering</h4>
         <form (ngSubmit)="sendWaterRequest()">
           <div>
             <label for="wateringTime">Watering time (seconds):</label>
-            <input
-              id="wateringTime"
-              type="number"
-              [(ngModel)]="wateringTime"
-              name="wateringTime"
-              required
-            />
+            <input id="wateringTime" type="number" [(ngModel)]="wateringTime" name="wateringTime" required />
           </div>
           <button type="submit">Start watering</button>
         </form>
-    </div>
-
-    <div class="measurements">
+      </div>
+    
+      <div class="tab-pane" [class.active]="activeTab === 'measurements'" *ngIf="activeTab === 'measurements'">
         <h4>Measurements</h4>
         <div class="tabs">
-          <button
-            *ngFor="let m of measurementEnumKeysFiltered"
-            (click)="fetchMeasurements(m)"
-            [class.active]="m === selectedMeasurementTab"
-          >
-            {{ getEnumValue(m) }}
-          </button>
+          <div *ngFor="let m of measurementEnumKeysFiltered" (click)="fetchMeasurements(m)" [class.active]="m === selectedMeasurementTab">
+            <img [src]="getEnumImage(m)" alt="{{ getEnumValue(m) }}" />
+            <p>{{ getEnumValue(m) }}</p>
+          </div>
         </div>
         <div *ngIf="paginatedMeasurements.length" class="data">
           <div *ngFor="let measurement of paginatedMeasurements">
-            <p><strong>Date:</strong> {{ formatPrettyDate(measurement.date) }}</p>
-            <p><strong>Value:</strong> {{ measurement.value }}</p>
+            <p><strong>{{ measurement.value }} {{ measurement.unit}}</strong> | {{ formatPrettyDate(measurement.date) }}</p>
           </div>
           <div class="pagination">
-            <button (click)="fetchMeasurements(selectedMeasurementTab, currentPage - 1)" [disabled]="currentPage === 0">
-              Previous
-            </button>
-            <button (click)="fetchMeasurements(selectedMeasurementTab, currentPage + 1)">
-              Next
-            </button>
+            <button (click)="fetchMeasurements(selectedMeasurementTab, currentPage - 1)" [disabled]="currentPage === 0">Previous</button>
+            <button (click)="fetchMeasurements(selectedMeasurementTab, currentPage + 1)">Next</button>
           </div>
         </div>
       </div>
-
-    <div class="add-frequency">
-      <h4>Update frequency</h4>
-      <form (ngSubmit)="addFrequency()">
-        <div>
-          <label for="measurement">Measurement:</label>
-          <select id="measurement" [(ngModel)]="selectedMeasurement" name="measurement">
-            <option *ngFor="let m of measurementEnumKeys" [value]="m">{{getEnumValue(m)}}</option>
-          </select>
-        </div>
-      
-        <div>
-          <label for="frequency">Frequency:</label>
-          <input id="frequency" type="number" [(ngModel)]="frequencyValue" name="frequency" required />
-        </div>
     
-        <button type="submit">Set frequency</button>
-      </form>
-    </div>
-  
-    <div class="thresholds">
-      <h4>Thresholds</h4>
-      <div *ngFor="let t of thresholds">
-        <p><strong>Measurement:</strong> {{ getEnumValue(t.measurement) }}</p>
-        <p><strong>Lower threshold:</strong> {{ t.threshold.lower }}</p>
-        <p><strong>Upper threshold:</strong> {{ t.threshold.upper }}</p>
+      <div class="tab-pane thresholds" [class.active]="activeTab === 'thresholds'" *ngIf="activeTab === 'thresholds'">
+        <h4>Thresholds</h4>
+        <div *ngFor="let t of thresholds" class="thresholds">
+          <div class="tabs-threshold">
+            <img [src]="getEnumImage(t.measurement)" alt="{{ getEnumValue(t.measurement) }}" />
+            <p>{{ getEnumValue(t.measurement) }}</p>
+          </div>
+          <div>
+            <img src="assets/min.png" />
+            <p>{{ t.threshold.lower }} {{thresholdUnit(t.measurement)}}</p>
+          </div>
+          <div>
+            <img src="assets/max.png" />
+            <p>{{ t.threshold.upper }} {{thresholdUnit(t.measurement)}}</p>
+          </div>
+        </div>
       </div>
-    </div>
-      
-  
-    <div class="add-threshold">
-      <h4>Update threshold</h4>
-      <form (ngSubmit)="addThreshold()">
-        <div>
+    
+      <div class="tab-pane frequency" [class.active]="activeTab === 'frequency'" *ngIf="activeTab === 'frequency'">
+        <h4>Update frequency</h4>
+        <form (ngSubmit)="addFrequency()">
+          <div>
             <label for="measurement">Measurement:</label>
             <select id="measurement" [(ngModel)]="selectedMeasurement" name="measurement">
-              <option *ngFor="let m of measurementEnumKeysFiltered" [value]="m">{{getEnumValue(m)}}</option>
+              <option *ngFor="let m of measurementEnumKeys" [value]="m">{{ getEnumValue(m) }}</option>
             </select>
-        </div>
-  
-        <div>
-            <label for="min">Lower:</label>
-            <input id="min" type="number" [(ngModel)]="thresholdMin" name="min" required />
-        </div>
-        
-        <div>
-            <label for="max">Upper:</label>
-            <input id="max" type="number" [(ngModel)]="thresholdMax" name="max" required />
-        </div>
-
-        <button type="submit">Set threshold</button>
-      </form>
+          </div>
+          <div>
+            <label for="frequency">Frequency:</label>
+            <input id="frequency" type="number" [(ngModel)]="frequencyValue" name="frequency" required />
+          </div>
+          <button type="submit">Set frequency</button>
+        </form>
+      </div>
     </div>
-  </div>
-  
+</div>

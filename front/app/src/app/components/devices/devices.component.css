@@ -21,13 +21,16 @@
     border-radius: 5px;
     padding: 15px;
     column-gap: 1em;
+    justify-self: start;
+    column-gap: 1em;
+    align-items: center;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
+    width: 30%;
 }
 
 .devices-container div img {
-    width: 40px;
-    padding-top: 10px;
+    width: 60px;
 }
   
 .devices-container > div:hover {
@@ -40,5 +43,5 @@
     padding: 15px;
     border: 1px solid #ddd;
     border-radius: 5px;
-    background-color: #f9f9f9;
+    background-color: #ffffff;
 }

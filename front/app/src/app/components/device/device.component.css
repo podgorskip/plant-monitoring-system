@@ -1,103 +1,188 @@
-.device {
-    font-family: Arial, sans-serif;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 15px;
-    background-color: #f9f9f9;
+:root {
+    --primary-color: #4caf50;
+    --secondary-color: #f1f1f1;
+    --text-color: #333;
+    --border-radius: 12px;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+    --hover-color: #388e3c;
+    --background-color: #f9f9f9;
+    --accent-color: #e0f7fa;
 }
-  
-.device p {
-    margin: 5px 0;
-    font-size: 14px;
+
+.navigation {
+    display: grid;
+    gap: 1.5em;
+}
+
+.navigation div {
+    display: flex;
+    gap: 0.5em;
+}
+
+.navigation div:hover {
+    cursor: pointer;
+}
+
+.navigation div img {
+    width: 25px;
+    height: 25px;
+}
+
+.device {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    height: 100vh;
 }
 
 .device .info {
-    display: flex;
-    justify-content: space-between;
+    margin-bottom: 2em;
 }
 
-.device .info img {
-    width: 100px;
-    height: auto;
-    padding: 1em 1em 0 0;
+.info img {
+    width: 50px;
 }
 
-.thresholds {
-    margin-top: 10px;
+.side-bar {
+    padding-right: 3em;
+    border-right: 1px solid rgb(206, 206, 206);
 }
-  
-.thresholds div {
-    border: 1px solid #756161;
-    padding: 8px;
+
+.tab-navigation {
+    padding-left: 3em;
+}
+
+button {
     border-radius: 5px;
-    margin-bottom: 5px;
-    background-color: #fff;
-}
-  
-.thresholds div p {
-    margin: 2px 0;
-    font-size: 12px;
-}
-  
-.add-threshold {
-    margin-top: 2em;
 }
 
-.add-threshold form,
-.add-frequency form {
-    display: flex;
-    align-items: center;
+h4 {
+    margin-bottom: 1.5em;
+}
+
+.tab-pane {
+    display: none; 
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.tab-pane:first-child {
+    display: grid;
     gap: 1em;
-    margin-bottom: 1em;
 }
 
-.add-threshold form div,
-.add-frequency form div {
-    gap: 0.5em;
-    align-items: center;
+.tab-pane.active {
+    display: block; 
+    opacity: 1;
+}
+
+.tab-pane:first-child form {
     display: flex;
+    gap: 2em;
+    align-items: center;
 }
 
-.watering, .measurements, .measurement {
-    margin: 2em 0em;
-}
-
-.watering form {
+.tab-pane form div,
+.tab-pane.active form div {
     display: flex;
     gap: 1em;
-    align-items: start;
 }
 
-.watering form div {
+.tab-pane .tabs,
+.tab-pane .tabs-threshold {
+    display: flex;
+    gap: 2em;
+}
+
+.tab-pane .tabs img,
+.tab-pane.active .tabs img {
+    width: 20px;
+    height: 20px;
+}
+
+.tab-pane .tabs-threshold, 
+.thresholds div {
     display: flex;
     gap: 0.5em;
 }
 
 .tabs {
+    display: flex; 
+    gap: 2em;
+    margin-bottom: 1em;
+}
+
+.tabs div {
     display: flex;
-    gap: 1.5em;
+    gap: 0.5em;
 }
 
-.tabs button, .pagination button {
-    border-radius: 5px;
-    padding: 2px 10px;   
+.tabs div:hover {
+    cursor: pointer;
 }
 
-.data {
-    margin-top: 1em;
+.tabs div img,
+.thresholds div img {
+    width: 20px;
+    height: 20px;
+}
+
+.tab-pane .thresholds {
+    display: grid;
+    row-gap: 1em;
+    margin-bottom: 2em;
+}
+
+.tab-pane.threshold-setter{
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 3em;
+}
+
+.tab-pane.threshold-setter h4 {
+    grid-column: 1 / -1;
+}
+
+.tab-pane.frequency form {
+    display: grid;
+    row-gap: 1em;
+}
+
+.tab-pane.frequency form label,
+.tab-pane.frequency form input,
+.tab-pane.frequency form select {
+    width: 150px;
+    outline: none;
+}
+
+.tab-pane.frequency form select {
+    background-color: white;
+}
+
+.tab-pane.frequency form button {
+    justify-self: start;
+}
+
+.tab-pane.thresholds h4 {
+    grid-column: 1 / -1;
+}
+
+.tab-pane.thresholds {
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 3em;
+}
+
+.pagination {
+    display: flex;
+    width: 100%;
+    justify-content: start;
+    gap: 3em;
 }
 
 .pagination button {
     width: 100px;
-    text-align: center;
-}
-
-.watering button, .add-threshold button, .add-frequency button {
-    border-radius: 5px;
-}
-
-.pagination {
-    font-size: 0.7em;
-    display: flex;
-    gap: 1em;
+    padding: 2px;
+    font-size: 0.8em;
+    margin-top: 1em;
 }

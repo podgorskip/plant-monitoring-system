@@ -57,8 +57,8 @@ export class DeviceService {
     size: number = 10,
     sortBy: string = 'date',
     sortDir: string = 'DESC'
-  ): Observable<{ content: { date: string; value: number }[] }> {
-    return this.http.get<{ content: { date: string; value: number }[] }>(
+  ): Observable<{ content: { date: string; value: number, unit: string }[] }> {
+    return this.http.get<{ content: { date: string; value: number, unit: string }[] }>(
       `${this.apiUrl}/${deviceId}/measurements?measurement=${measurement}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
     );
   }
