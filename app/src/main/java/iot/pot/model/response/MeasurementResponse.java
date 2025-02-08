@@ -14,4 +14,5 @@ public class MeasurementResponse {
     private Long id;
     private Double value;
     private LocalDateTime date;
+    private String unit;
 }

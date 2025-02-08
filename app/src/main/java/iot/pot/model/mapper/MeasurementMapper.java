@@ -9,6 +9,7 @@ public class MeasurementMapper {
                 .id(measurement.getId())
                 .value(measurement.getValue())
                 .date(measurement.getDate())
+                .unit(measurement.getUnit())
                 .build();
     }
 }
