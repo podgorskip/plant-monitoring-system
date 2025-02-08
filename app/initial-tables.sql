@@ -96,4 +96,15 @@ CREATE TABLE insolation_digital (
     value NUMERIC(5, 2) NOT NULL,
     device_id BIGINT NOT NULL REFERENCES device(id),
     date TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+DROP TABLE IF EXISTS water_level;
+
+CREATE TABLE water_level (
+    id BIGINT PRIMARY KEY,
+    value NUMERIC(5, 2) NOT NULL,
+    device_id BIGINT NOT NULL REFERENCES device(id),
+    date TIMESTAMP NOT NULL DEFAULT NOW()
 )
+
+
