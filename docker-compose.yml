@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./.config/app/.env
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+    networks:
+      - smart-pot-network
+
+  frontend:
+    build: ./frontend/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - smart-pot-network
+
+  db:
+    image: postgres:15
+    restart: always
+    env_file:
+      - ./.config/db/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db-init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - smart-pot-network
+  
+  mqtt:
+    image: eclipse-mosquitto:latest
+    restart: always
+    env_file:
+      - ./.config/broker/.env
+    ports:
+      - "1883:1883"  
+      - "9001:9001" 
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf      
+      - ./mosquitto/config/passwordfile:/mosquitto/config/passwordfile
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - smart-pot-network
+
+networks:
+  smart-pot-network:
+
+volumes:
+  postgres_data:

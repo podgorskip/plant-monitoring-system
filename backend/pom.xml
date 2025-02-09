@@ -9,10 +9,11 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>iot</groupId>
-	<artifactId>pot</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>pot</name>
+	<artifactId>smart-pot-backend</artifactId>
+	<version>1.0</version>
+	<name>smart-pot-backend</name>
 	<description>Smart pot app </description>
+	<packaging>jar</packaging>
 	<url/>
 	<licenses>
 		<license/>
