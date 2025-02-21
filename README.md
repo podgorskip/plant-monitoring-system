@@ -135,8 +135,8 @@ where *parameter* is one of: *air\_humidity/soil\_humidity/temperature/insolatio
     
   - **Threshold configuration**: set min/max limits for alerts.
     
-      <img width="1454" alt="measurements" src="https://github.com/user-attachments/assets/eae56a6d-4d1d-4b0e-9cf3-3efdb93821b1" />
-      
+      <img width="1454" alt="thresholds" src="https://github.com/user-attachments/assets/bc0c69a2-16ab-42ff-a4a2-44917ece6be8" />
+
   - **Notifications**: SMS alerts via Twilio.
 
 ## Docker-based deployment
