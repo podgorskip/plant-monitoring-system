@@ -160,8 +160,8 @@ The system can be deployed using Docker with the following services:
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/podgorskip/smart-pot
-   cd smart-pot
+   git clone https://github.com/podgorskip/plant-monitoring-system
+   cd plant-monitoring-system
    ```
 
 2. Configure environment variables:
